@@ -11,7 +11,6 @@
  */
 
 #include "cmd_fn.h"
-
 #include "fira_app_config.h"
 #include "reporter.h"
 #include "uwb_translate.h"
@@ -64,6 +63,8 @@ extern const app_definition_t idle_app[];
 #ifdef LISTENER_ENABLED
 extern const app_definition_t helpers_app_listener[];
 #endif
+extern const app_definition_t helpers_app_responder[];
+extern const app_definition_t helpers_app_investigator[];
 extern const app_definition_t helpers_app_fira[];
 extern struct l1_config_platform_ops l1_config_platform_ops;
 static enum qerr uwb_stack_init(struct uwbmac_context **uwbmac_ctx)
@@ -738,6 +739,14 @@ REG_FN(f_setapp)
     {
         app_dwt->app = &helpers_app_fira[FIRA_APP_RESPF];
         fira_params->app_type = FIRA_APP_RESPF;
+    }
+    else if (!strcmp(app, "R"))
+    {
+        app_dwt->app = &helpers_app_responder[0];
+    }
+    else if (!strcmp(app, "I"))
+    {
+        app_dwt->app = &helpers_app_investigator[0];
     }
 #ifdef LISTENER_ENABLED
     else if (!strcmp(app, "LISTENER"))

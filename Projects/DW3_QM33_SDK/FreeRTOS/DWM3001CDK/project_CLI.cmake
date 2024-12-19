@@ -9,6 +9,9 @@ set(MY_TARGET ${MY_BOARD}-${MY_PROJECT}_CLI-${MY_OS})
 set(USE_CLI 1)
 set(USE_UCI 0)
 
+# Duz
+set(USE_DUZ 1)
+
 # Non-FiRa applications
 set(USE_LISTENER 1)
 

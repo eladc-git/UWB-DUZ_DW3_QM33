@@ -48,6 +48,10 @@ if(USE_LISTENER)
   target_compile_definitions(app_common PUBLIC LISTENER_ENABLED=1)
 endif()
 
+if(USE_DUZ)
+  target_compile_definitions(app_common PUBLIC DUZ_ENABLED=1)
+endif()
+
 if(CONFIG_SOC_PROTECT)
   target_compile_definitions(app_common PUBLIC CONFIG_SOC_PROTECT)
 endif()

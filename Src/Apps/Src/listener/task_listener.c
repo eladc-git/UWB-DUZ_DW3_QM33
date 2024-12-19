@@ -210,7 +210,7 @@ static void listener_setup_tasks(void)
     size_t task_size = LISTENER_TASK_STACK_SIZE_BYTES;
     listenerTask.task_stack = qmalloc(task_size);
 
-    listenerTask.thread = qthread_create(ListenerTask, NULL, "Listener", listenerTask.task_stack, LISTENER_TASK_STACK_SIZE_BYTES, PRIO_RxTask);
+    listenerTask.thread = qthread_create(ListenerTask, NULL, "Listener", listenerTask.task_stack, LISTENER_TASK_STACK_SIZE_BYTES, QTHREAD_PRIORITY_HIGH);
     if (!listenerTask.thread)
     {
         error_handler(1, _ERR_Create_Task_Bad);

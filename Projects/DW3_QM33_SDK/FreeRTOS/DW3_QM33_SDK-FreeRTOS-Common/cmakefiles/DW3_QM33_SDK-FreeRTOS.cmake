@@ -86,6 +86,10 @@ if(USE_LISTENER EQUAL 1)
   set(DIRECT_DWT_DRIVER 1)
 endif()
 
+if(USE_DUZ EQUAL 1)
+  set(DIRECT_DWT_DRIVER 1)
+endif()
+
 # Include internal libraries
 add_subdirectory(ProjectDefinition)
 add_subdirectory(${PROJECT_BASE}/SDK_BSP/${MY_BSP} ${MY_BSP})
@@ -161,6 +165,11 @@ list(APPEND LINK_LIB_LIST "Interface")
 if(USE_LISTENER EQUAL 1)
   add_subdirectory(${PROJECT_BASE}/Src/Apps/Src/listener AppListener)
   list(APPEND LINK_LIB_LIST "listener")
+endif()
+
+if(USE_DUZ EQUAL 1)
+  add_subdirectory(${PROJECT_BASE}/Src/Apps/Src/duz AppDuz)
+  list(APPEND LINK_LIB_LIST "duz")
 endif()
 
 if(USE_UCI EQUAL 1)
