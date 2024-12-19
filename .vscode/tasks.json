@@ -1,0 +1,226 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+        // Show prompts to choose build and board and save it in project_config.json.
+        {
+            "label": "Choose configuration",
+            "type": "shell",
+            "windows": {
+                "command": "python set_config.py ${input:saveBuild} ${input:saveBoard}"
+            },
+            "linux": {
+                "command": "python3 set_config.py ${input:saveBuild} ${input:saveBoard}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/.vscode/scripts"
+            },
+            "presentation": {
+                "group": "config",
+                "clear": true
+            },
+        },
+        // Print saved configuration from project_config.json.
+        {
+            "label": "Check configuration",
+            "type": "shell",
+            "command": "echo",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "group": "config",
+                "clear": true,
+            },
+            "args": ["*** CURRENT CONFIGURATION: BUILD=${input:buildConfig} BOARD=${input:boardConfig} CPU=${input:cpuConfig} ***\n\n"],
+        },
+        // Print saved configuration from project_config.json.
+        {
+            "label": "Build firmware",
+            "type": "shell",
+            "dependsOn": "_create target",
+            "command": "make all V=1 -j",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_${input:buildConfig}/FreeRTOS/${input:boardConfig}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build",
+            },
+        },
+        // Flash target (firmware needs to be already built).
+        {
+            "label": "Flash target",
+            "type": "shell",
+            "windows": {
+                "command": "python flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_${input:buildConfig}/FreeRTOS/${input:boardConfig}/${input:boardConfig}-DW3_QM33_SDK_${input:buildConfig}-FreeRTOS.elf ${input:cpuConfig}"
+            },
+            "linux": {
+                "command": "python3 flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_${input:buildConfig}/FreeRTOS/${input:boardConfig}/${input:boardConfig}-DW3_QM33_SDK_${input:buildConfig}-FreeRTOS.elf ${input:cpuConfig}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/.vscode/scripts"
+            },
+            "presentation": {
+                "group": "flash",
+            },
+        },
+        // Rebuild target and flash board.
+        {
+            "label": "Build & flash target",
+            "type": "shell",
+            "dependsOn": "Build firmware",
+            "windows": {
+                "command": "python flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_${input:buildConfig}/FreeRTOS/${input:boardConfig}/${input:boardConfig}-DW3_QM33_SDK_${input:buildConfig}-FreeRTOS.elf ${input:cpuConfig}"
+            },
+            "linux": {
+                "command": "python3 flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_${input:buildConfig}/FreeRTOS/${input:boardConfig}/${input:boardConfig}-DW3_QM33_SDK_${input:buildConfig}-FreeRTOS.elf ${input:cpuConfig}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/.vscode/scripts"
+            },
+            "presentation": {
+                "group": "build",
+            },
+        },
+        // Remove build output and build fresh target.
+        {
+            "label": "Build clean firmware",
+            "type": "shell",
+            "dependsOn": "_force create target",
+            "command": "make all V=1 -j",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_${input:buildConfig}/FreeRTOS/${input:boardConfig}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build",
+            },
+        },
+        // Create target only if does not exist (for re-build).
+        {
+            "label": "_create target",
+            "type": "shell",
+            "group": {
+                "kind": "build",
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/${input:boardConfig}/CreateTarget.py ${input:buildConfig} -no-force"
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/${input:boardConfig}/CreateTarget.py ${input:buildConfig} -no-force"
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            },
+        },
+        // Create target (for clean build).
+        {
+            "label": "_force create target",
+            "type": "shell",
+            "group": {
+                "kind": "build",
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/${input:boardConfig}/CreateTarget.py ${input:buildConfig}"
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/${input:boardConfig}/CreateTarget.py ${input:buildConfig}"
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            },
+        },
+
+    ],
+
+    "inputs": [
+        // Show prommpt to choose build type.
+        {
+            "id": "saveBuild",
+            "type": "command",
+            "command": "extension.commandvariable.pickStringRemember",
+            "args": {
+                "key": "build_type",
+                "options": [ "UCI", "CLI" ],
+                "default": "UCI",
+                "description": "Choose build type"
+            }
+        },
+        // Show prommpt to choose board type.
+        {
+            "id": "saveBoard",
+            "type": "command",
+            "command": "extension.commandvariable.pickStringRemember",
+            "args": {
+                "key": "board_type",
+                "options": [ "nRF52840DK", "DWM3001CDK", "Type2AB_EVB" ],
+                "default": "nRF52840DK",
+                "description": "Choose a devkit board",
+            }
+        },
+        // Get configured cpu from project_config.json.
+        {
+            "id": "cpuConfig",
+            "type": "command",
+            "command": "extension.commandvariable.file.content",
+            "args": {
+              "fileName": "${workspaceFolder}/.vscode/project_config.json",
+              "json": "content.cpu",
+              "keyRemember": "cpu",
+            }
+        },
+        // Get configured board type from project_config.json.
+        {
+            "id": "boardConfig",
+            "type": "command",
+            "command": "extension.commandvariable.file.content",
+            "args": {
+              "fileName": "${workspaceFolder}/.vscode/project_config.json",
+              "json": "content.board",
+              "keyRemember": "board",
+            }
+        },
+        // Get configured build type from project_config.json.
+        {
+            "id": "buildConfig",
+            "type": "command",
+            "command": "extension.commandvariable.file.content",
+            "args": {
+              "fileName": "${workspaceFolder}/.vscode/project_config.json",
+              "json": "content.build",
+              "keyRemember": "build",
+            }
+        },
+    ]
+  }

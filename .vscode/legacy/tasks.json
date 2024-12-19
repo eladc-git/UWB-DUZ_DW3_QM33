@@ -1,0 +1,568 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+        /////////// DWM3001CDK ///////////
+        {
+            "label": "Build CLI | DWM3001CDK",
+            "type": "shell",
+            "command": "make all V=1 -j",
+            "dependsOn": "_create CLI DWM3001CDK",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/DWM3001CDK"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "Build (clean) CLI | DWM3001CDK",
+            "type": "shell",
+            "command": "make all V=1 -j",
+            "dependsOn": "_force create CLI | DWM3001CDK",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/DWM3001CDK"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "_create CLI | DWM3001CDK",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/DWM3001CDK/CreateTarget.py cli -no-force",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/DWM3001CDK/CreateTarget.py cli -no-force",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "_force create CLI | DWM3001CDK",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/DWM3001CDK/CreateTarget.py cli",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/DWM3001CDK/CreateTarget.py cli",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "Flash CLI | DWM3001CDK",
+            "type": "shell",
+            "windows": {
+                "command": "python flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/DWM3001CDK/DWM3001CDK-DW3_QM33_SDK_CLI-FreeRTOS.elf nrf52840",
+            },
+            "linux": {
+                "command": "python3 flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/DWM3001CDK/DWM3001CDK-DW3_QM33_SDK_CLI-FreeRTOS.elf nrf52840",
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/.vscode/scripts"
+            },
+            "presentation": {
+                "group": "flash",
+                "clear": true
+            }
+        },
+        {
+            "label": "Build UCI | DWM3001CDK",
+            "type": "shell",
+            "command": "make all V=1 -j",
+            "dependsOn": "_create UCI DWM3001CDK",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/DWM3001CDK"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "Build (clean) UCI | DWM3001CDK",
+            "type": "shell",
+            "command": "make all -j",
+            "dependsOn": "_force create UCI | DWM3001CDK",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/DWM3001CDK"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "_create UCI | DWM3001CDK",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/DWM3001CDK/CreateTarget.py uci -no-force",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/DWM3001CDK/CreateTarget.py uci -no-force",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "_force create UCI | DWM3001CDK",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/DWM3001CDK/CreateTarget.py uci",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/DWM3001CDK/CreateTarget.py uci",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "Flash UCI | DWM3001CDK",
+            "type": "shell",
+            "windows": {
+                "command": "python flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/DWM3001CDK/DWM3001CDK-DW3_QM33_SDK_UCI-FreeRTOS.elf nrf52833",
+            },
+            "linux": {
+                "command": "python3 flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/DWM3001CDK/DWM3001CDK-DW3_QM33_SDK_UCI-FreeRTOS.elf nrf52833",
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/.vscode/scripts"
+            }
+        },
+        /////////// nRF52840DK ///////////
+        {
+            "label": "Build CLI | nRF52840DK",
+            "type": "shell",
+            "command": "make all V=1 -j",
+            "dependsOn": "_create CLI | nRF52840DK",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/nRF52840DK"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "Build (clean) CLI | nRF52840DK",
+            "type": "shell",
+            "command": "make all V=1 -j",
+            "dependsOn": "_force create CLI | nRF52840DK",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/nRF52840DK"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "_create CLI | nRF52840DK",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/nRF52840DK/CreateTarget.py cli -no-force",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/nRF52840DK/CreateTarget.py cli -no-force",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "_force create CLI | nRF52840DK",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/nRF52840DK/CreateTarget.py cli",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/nRF52840DK/CreateTarget.py cli",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "Flash CLI | nRF52840DK",
+            "type": "shell",
+            "windows": {
+                "command": "python flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/nRF52840DK/nRF52840DK-DW3_QM33_SDK_CLI-FreeRTOS.elf nrf52840",
+            },
+            "linux": {
+                "command": "python3 flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/nRF52840DK/nRF52840DK-DW3_QM33_SDK_CLI-FreeRTOS.elf nrf52840",
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/.vscode/scripts"
+            },
+            "presentation": {
+                "group": "flash",
+                "clear": true
+            }
+        },
+        {
+            "label": "Build UCI | nRF52840DK",
+            "type": "shell",
+            "command": "make all V=1 -j",
+            "dependsOn": "_create UCI | nRF52840DK",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/nRF52840DK"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "Build (clean) UCI | nRF52840DK",
+            "type": "shell",
+            "command": "make all -j",
+            "dependsOn": "_force create UCI | nRF52840DK",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/nRF52840DK"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "_create UCI | nRF52840DK",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/nRF52840DK/CreateTarget.py uci -no-force",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/nRF52840DK/CreateTarget.py uci -no-force",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "_force create UCI | nRF52840DK",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/nRF52840DK/CreateTarget.py uci",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/nRF52840DK/CreateTarget.py uci",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "Flash UCI | nRF52840DK",
+            "type": "shell",
+            "windows": {
+                "command": "python flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/nRF52840DK/nRF52840DK-DW3_QM33_SDK_UCI-FreeRTOS.elf nrf52840",
+            },
+            "linux": {
+                "command": "python3 flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/nRF52840DK/nRF52840DK-DW3_QM33_SDK_UCI-FreeRTOS.elf nrf52840",
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/.vscode/scripts"
+            }
+        },
+        /////////// Murata Type2AB_EVB ///////////
+        {
+            "label": "Build CLI | Type2AB_EVB",
+            "type": "shell",
+            "command": "make all V=1 -j",
+            "dependsOn": "_create CLI | Type2AB_EVB",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/Type2AB_EVB"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "Build (clean) CLI | Type2AB_EVB",
+            "type": "shell",
+            "command": "make all V=1 -j",
+            "dependsOn": "_force create CLI | Type2AB_EVB",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/Type2AB_EVB"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "_create CLI | Type2AB_EVB",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/Type2AB_EVB/CreateTarget.py cli -no-force",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/Type2AB_EVB/CreateTarget.py cli -no-force",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "_force create CLI | Type2AB_EVB",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/Type2AB_EVB/CreateTarget.py cli",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/Type2AB_EVB/CreateTarget.py cli",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "Flash CLI | Type2AB_EVB",
+            "type": "shell",
+            "windows": {
+                "command": "python flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/Type2AB_EVB/Type2AB_EVB-DW3_QM33_SDK_CLI-FreeRTOS.elf nrf52840",
+            },
+            "linux": {
+                "command": "python3 flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_CLI/FreeRTOS/Type2AB_EVB/Type2AB_EVB-DW3_QM33_SDK_CLI-FreeRTOS.elf nrf52840",
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/.vscode/scripts"
+            },
+            "presentation": {
+                "group": "flash",
+                "clear": true
+            }
+        },
+        {
+            "label": "Build UCI | Type2AB_EVB",
+            "type": "shell",
+            "command": "make all V=1 -j",
+            "dependsOn": "_create UCI | Type2AB_EVB",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/Type2AB_EVB"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "Build (clean) UCI | Type2AB_EVB",
+            "type": "shell",
+            "command": "make all -j",
+            "dependsOn": "_force create UCI | Type2AB_EVB",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/Type2AB_EVB"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "group": "build"
+            }
+        },
+        {
+            "label": "_create UCI | Type2AB_EVB",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/Type2AB_EVB/CreateTarget.py uci -no-force",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/Type2AB_EVB/CreateTarget.py uci -no-force",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "_force create UCI | Type2AB_EVB",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "windows": {
+                "command": "python ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/Type2AB_EVB/CreateTarget.py uci",
+            },
+            "linux": {
+                "command": "python3 ${workspaceRoot}/Projects/DW3_QM33_SDK/FreeRTOS/Type2AB_EVB/CreateTarget.py uci",
+            },
+            "hide": true,
+            "presentation": {
+                "group": "build",
+                "clear": true
+            }
+        },
+        {
+            "label": "Flash UCI | Type2AB_EVB",
+            "type": "shell",
+            "windows": {
+                "command": "python flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/Type2AB_EVB/Type2AB_EVB-DW3_QM33_SDK_UCI-FreeRTOS.elf nrf52840",
+            },
+            "linux": {
+                "command": "python3 flash_target.py ${workspaceRoot}/BuildOutput/DW3_QM33_SDK_UCI/FreeRTOS/Type2AB_EVB/Type2AB_EVB-DW3_QM33_SDK_UCI-FreeRTOS.elf nrf52840",
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/.vscode/scripts"
+            }
+        }
+    ]
+  }
