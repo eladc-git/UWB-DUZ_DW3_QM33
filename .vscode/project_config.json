@@ -1,0 +1,5 @@
+{
+    "build": "CLI",
+    "board": "Type2AB_EVB",
+    "cpu": "nrf52840"
+}

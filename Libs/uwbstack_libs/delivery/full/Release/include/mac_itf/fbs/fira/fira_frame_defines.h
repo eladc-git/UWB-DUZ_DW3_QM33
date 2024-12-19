@@ -1,0 +1,56 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2024 Qorvo US, Inc.
+ *
+ * SPDX-License-Identifier: LicenseRef-QORVO-1
+ */
+
+#pragma once
+
+#include "net/af_ieee802154.h"
+#include "net/mcps802154.h"
+
+#define FIRA_IE_VENDOR_OUI_LEN 3
+#define FIRA_IE_HEADER_PADDING_LEN 8
+#define FIRA_IE_HEADER_SESSION_ID_LEN 4
+#define FIRA_IE_HEADER_STS_INDEX_LEN 4
+#define FIRA_IE_HEADER_LEN                                                                     \
+	(FIRA_IE_VENDOR_OUI_LEN + FIRA_IE_HEADER_PADDING_LEN + FIRA_IE_HEADER_SESSION_ID_LEN + \
+	 FIRA_IE_HEADER_STS_INDEX_LEN)
+
+#define FIRA_MIC_LEVEL 64
+#define FIRA_MIC_LEN (FIRA_MIC_LEVEL / 8)
+
+#define FIRA_FC_DATA_FRAME_DEFAULT                                                               \
+	IEEE802154_FC_VALUE(IEEE802154_FC_TYPE_DATA, 1, 0, 0, 1, 1, 0, IEEE802154_ADDR_SHORT, 2, \
+			    IEEE802154_ADDR_NONE)
+
+#define FIRA_FC_MULTIPURPOSE_FRAME_DEFAULT                                                       \
+	IEEE802154_FC_MP_VALUE_LONG(IEEE802154_ADDR_SHORT, IEEE802154_ADDR_SHORT, 0, 1, 1, 0, 0, \
+				    0, 0)
+
+/* 3 IE headers in the frame : vendor IE, header terminator and payload. */
+#define FIRA_FRAME_WITHOUT_PAYLOAD_LEN                                        \
+	(IEEE802154_FC_LEN + IEEE802154_SCF_LEN + IEEE802154_SHORT_ADDR_LEN + \
+	 3 * IEEE802154_IE_HEADER_LEN + FIRA_IE_HEADER_LEN + FIRA_MIC_LEN + IEEE802154_FCS_LEN)
+
+#define FIRA_DM_PAYLOAD_IE_LEN (FIRA_IE_VENDOR_OUI_LEN + 3)
+#define FIRA_FRAME_DM_HEADER_IE_LEN (IEEE802154_IE_HEADER_LEN + FIRA_IE_HEADER_LEN)
+#define FIRA_FRAME_DM_PAYLOAD_IE_LEN (IEEE802154_IE_HEADER_LEN + FIRA_DM_PAYLOAD_IE_LEN)
+
+#define FIRA_MAX_LINK_LAYER_OVERHEAD_LEN 8
+
+#define FIRA_IE_VENDOR_OUI 0x5a18ff
+#define FIRA_IE_HEADER_PADDING 0x08
+
+#define FIRA_MESSAGE_UWB_MSG_ID_MASK (0xf << 0)
+#define FIRA_MESSAGE_UWB_MSG_ID_LEN 1
+
+#define FIRA_MESSAGE_OWR_MSG_TYPE_MASK (0xf << 4)
+
+#define FIRA_OWR_DTM_LOCATION_COORD_RELATIVE_LEN 10
+#define FIRA_OWR_DTM_LOCATION_COORD_WGS84_LEN 12
+#define FIRA_OWR_DTM_LOCATION_SIZE_MAX FIRA_OWR_DTM_LOCATION_COORD_WGS84_LEN
+#define FIRA_OWR_DTM_LOCATION_LEN(_t_)                                                           \
+	(((_t_) == FIRA_DT_LOCATION_COORD_RELATIVE) ? FIRA_OWR_DTM_LOCATION_COORD_RELATIVE_LEN : \
+	 ((_t_) == FIRA_DT_LOCATION_COORD_WGS84)    ? FIRA_OWR_DTM_LOCATION_COORD_WGS84_LEN :    \
+						      0)

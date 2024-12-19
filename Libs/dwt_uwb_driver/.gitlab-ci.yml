@@ -1,0 +1,102 @@
+include:
+  - project: qorvo/tools/templates/ci-templates
+    ref: v6
+    file:
+      - sources/build/coverity-build.yml
+      - sources/sast/coverity-analyze.yml
+      - sources/rules/job-types.yml
+
+variables:
+  GIT_SUBMODULE_STRATEGY: none
+
+default:
+  interruptible: true
+  image: ${CI_REGISTRY}/qorvo/uwb-eng/continuous-integration/nrf_build_docker_image/nrf_build_docker_image:v2.0
+  before_script:
+    - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
+
+stages:
+  - build
+  - sast
+
+
+###############
+# Build stage #
+###############
+
+.build:
+  stage: build
+  extends: .coverity_build
+  variables:
+    BUILD_CMD: cmake -${TARGET}=1 -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi-gcc.cmake . -B build && cmake --build build
+    COMPILER: arm-none-eabi-gcc
+    COMPTYPE: gcc
+  artifacts:
+    expire_in: 1 week
+
+build_dw3000:
+  extends: .build
+  variables:
+    TARGET: DDWT_DW3000
+
+build_dw3720:
+  extends: .build
+  variables:
+    TARGET: DDWT_DW3720
+
+
+##############
+# Sast stage #
+##############
+
+.analyze:
+  stage: sast
+  extends:
+    - .coverity_full_analyze
+    - .nightly_only_job
+  variables:
+    COVERITY_FLAGS: --strip-path /c/git/quwb_mac --coding-standard-config /opt/cov-analysis/config/coding-standards/misrac2012/misrac2012-mandatory-required.config --disable-default
+    COVERITY_STREAM: "${CI_PROJECT_NAME}-${TARGET}-misra-mandatory-required"
+
+analyze_dw3000:
+  extends: .analyze
+  variables:
+    TARGET: dw3000
+  needs:
+    - job: build_dw3000
+      artifacts: true
+
+analyze_dw3720:
+  extends: .analyze
+  variables:
+    TARGET: dw3720
+  needs:
+    - job: build_dw3720
+      artifacts: true
+
+
+# incremental analysis
+
+.incremental_analyze:
+  stage: sast
+  extends:
+    - .coverity_incremental_analyze
+  variables:
+    COVERITY_FLAGS: --strip-path /c/git/quwb_mac --coding-standard-config /opt/cov-analysis/config/coding-standards/misrac2012/misrac2012-mandatory-required.config --disable-default
+    COVERITY_STREAM: "${CI_PROJECT_NAME}-${TARGET}-misra-mandatory-required"
+
+incremental_analyze_dw3000:
+  extends: .incremental_analyze
+  variables:
+    TARGET: dw3000
+  needs:
+    - job: build_dw3000
+      artifacts: true
+
+incremental_analyze_dw3720:
+  extends: .incremental_analyze
+  variables:
+    TARGET: dw3720
+  needs:
+    - job: build_dw3720
+      artifacts: true

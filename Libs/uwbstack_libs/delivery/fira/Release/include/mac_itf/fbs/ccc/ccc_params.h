@@ -1,0 +1,102 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2024 Qorvo US, Inc.
+ *
+ * SPDX-License-Identifier: LicenseRef-QORVO-1
+ */
+
+#pragma once
+
+#include <stdint.h>
+
+#define CCC_UWB_PARAMS_CRC_INIT 0x0001
+
+/* Object used to store configurable parameters set in HOST memory.
+ * These parameters can be retrieved using the ccc_get_host_parameters_hook hook
+ * API.
+ */
+/*
+ * @note : Definition of structure DTM_TUwbCfg_t is no longer part of CCC API
+ * file It may be defined in ccc_par.h or moved to another header file of the
+ * integration project
+ */
+/*
+ * Define the size of parameters inside au1Data array
+ */
+#define DTM_UWB_PARAM_VERSION_SZ 2 * sizeof(uint8_t)
+
+#define DTM_UWB_ANT0_CH9_PRF64_ANT_DLY_SZ 2 * sizeof(uint8_t)
+#define DTM_UWB_ANT0_CH5_PRF64_ANT_DLY_SZ 2 * sizeof(uint8_t)
+
+#define DTM_UWB_ANT0_CH9_PRF64_TX_POWER_SZ 4 * sizeof(uint8_t)
+#define DTM_UWB_ANT0_CH9_PRF64_PG_COUNT_SZ 2 * sizeof(uint8_t)
+#define DTM_UWB_ANT0_CH9_PRF64_PG_DELAY_SZ sizeof(uint8_t)
+
+#define DTM_UWB_ANT0_CH5_PRF64_TX_POWER_SZ 4 * sizeof(uint8_t)
+#define DTM_UWB_ANT0_CH5_PRF64_PG_COUNT_SZ 2 * sizeof(uint8_t)
+#define DTM_UWB_ANT0_CH5_PRF64_PG_DELAY_SZ sizeof(uint8_t)
+
+#define DTM_UWB_CH9_PDOA_ISO_RF2_RF1_SZ sizeof(uint8_t)
+#define DTM_UWB_CH9_PDOA_ISO_RF1_RF2_SZ sizeof(uint8_t)
+#define DTM_UWB_CH5_PDOA_ISO_RF2_RF1_SZ sizeof(uint8_t)
+#define DTM_UWB_CH5_PDOA_ISO_RF1_RF2_SZ sizeof(uint8_t)
+
+#define DTM_UWB_TEMP_REF_SZ sizeof(uint8_t)
+#define DTM_UWB_XTAL_TRIM_SZ sizeof(uint8_t)
+#define DTM_UWB_CH9_PLL_LOCK_CODE_SZ sizeof(uint8_t)
+#define DTM_UWB_CH5_PLL_LOCK_CODE_SZ sizeof(uint8_t)
+
+#define DTM_UWB_CCC_ANTENNA_ID_SZ sizeof(uint8_t)
+#define DTM_UWB_WIFI_COEX_GAP_DMS_OFFSET_SZ sizeof(uint8_t)
+#define DTM_UWB_AP_COOPERATION_SZ sizeof(uint8_t)
+#define DTM_UWB_ANTENNA_SELECTION_SZ sizeof(uint8_t)
+#define DTM_UWB_ALTERNATIVE_PULSE_SHAPE_SZ sizeof(uint8_t)
+#define DTM_UWB_WIFICOEX_MIN_SPACING_SZ sizeof(uint8_t)
+
+/*
+ * Define the offsets of parameters inside au1Data array
+ */
+#define DTM_UWB_PARAM_VERSION (0)
+
+#define DTM_UWB_ANT0_CH9_PRF64_ANT_DLY (DTM_UWB_PARAM_VERSION + DTM_UWB_PARAM_VERSION_SZ)
+#define DTM_UWB_ANT0_CH5_PRF64_ANT_DLY \
+	(DTM_UWB_ANT0_CH9_PRF64_ANT_DLY + DTM_UWB_ANT0_CH9_PRF64_ANT_DLY_SZ)
+
+#define DTM_UWB_ANT0_CH9_PRF64_TX_POWER \
+	(DTM_UWB_ANT0_CH5_PRF64_ANT_DLY + DTM_UWB_ANT0_CH5_PRF64_ANT_DLY_SZ)
+#define DTM_UWB_ANT0_CH9_PRF64_PG_COUNT \
+	(DTM_UWB_ANT0_CH9_PRF64_TX_POWER + DTM_UWB_ANT0_CH9_PRF64_TX_POWER_SZ)
+#define DTM_UWB_ANT0_CH9_PRF64_PG_DELAY \
+	(DTM_UWB_ANT0_CH9_PRF64_PG_COUNT + DTM_UWB_ANT0_CH9_PRF64_PG_COUNT_SZ)
+
+#define DTM_UWB_ANT0_CH5_PRF64_TX_POWER \
+	(DTM_UWB_ANT0_CH9_PRF64_PG_DELAY + DTM_UWB_ANT0_CH9_PRF64_PG_DELAY_SZ)
+#define DTM_UWB_ANT0_CH5_PRF64_PG_COUNT \
+	(DTM_UWB_ANT0_CH5_PRF64_TX_POWER + DTM_UWB_ANT0_CH5_PRF64_TX_POWER_SZ)
+#define DTM_UWB_ANT0_CH5_PRF64_PG_DELAY \
+	(DTM_UWB_ANT0_CH5_PRF64_PG_COUNT + DTM_UWB_ANT0_CH5_PRF64_PG_COUNT_SZ)
+
+#define DTM_UWB_CH9_PDOA_ISO_RF2_RF1 \
+	(DTM_UWB_ANT0_CH5_PRF64_PG_DELAY + 1 * DTM_UWB_ANT0_CH5_PRF64_PG_DELAY_SZ)
+#define DTM_UWB_CH9_PDOA_ISO_RF1_RF2 \
+	(DTM_UWB_CH9_PDOA_ISO_RF2_RF1 + DTM_UWB_CH9_PDOA_ISO_RF2_RF1_SZ)
+#define DTM_UWB_CH5_PDOA_ISO_RF2_RF1 \
+	(DTM_UWB_CH9_PDOA_ISO_RF1_RF2 + DTM_UWB_CH9_PDOA_ISO_RF1_RF2_SZ)
+#define DTM_UWB_CH5_PDOA_ISO_RF1_RF2 \
+	(DTM_UWB_CH5_PDOA_ISO_RF2_RF1 + DTM_UWB_CH5_PDOA_ISO_RF2_RF1_SZ)
+
+#define DTM_UWB_TEMP_REF (DTM_UWB_CH5_PDOA_ISO_RF1_RF2 + DTM_UWB_CH5_PDOA_ISO_RF1_RF2_SZ)
+#define DTM_UWB_XTAL_TRIM (DTM_UWB_TEMP_REF + DTM_UWB_TEMP_REF_SZ)
+#define DTM_UWB_CH9_PLL_LOCK_CODE (DTM_UWB_XTAL_TRIM + DTM_UWB_XTAL_TRIM_SZ)
+#define DTM_UWB_CH5_PLL_LOCK_CODE (DTM_UWB_CH9_PLL_LOCK_CODE + DTM_UWB_CH9_PLL_LOCK_CODE_SZ)
+
+#define DTM_UWB_CCC_ANTENNA_ID (DTM_UWB_CH5_PLL_LOCK_CODE + DTM_UWB_CH5_PLL_LOCK_CODE_SZ)
+#define DTM_UWB_WIFI_COEX_GAP_DMS_OFFSET (DTM_UWB_CCC_ANTENNA_ID + DTM_UWB_CCC_ANTENNA_ID_SZ)
+#define DTM_UWB_AP_COOPERATION \
+	(DTM_UWB_WIFI_COEX_GAP_DMS_OFFSET + DTM_UWB_WIFI_COEX_GAP_DMS_OFFSET_SZ)
+#define DTM_UWB_ANTENNA_SELECTION (DTM_UWB_AP_COOPERATION + DTM_UWB_AP_COOPERATION_SZ)
+#define DTM_UWB_ALTERNATIVE_PULSE_SHAPE (DTM_UWB_ANTENNA_SELECTION + DTM_UWB_ANTENNA_SELECTION_SZ)
+#define DTM_UWB_WIFICOEX_MIN_SPACING \
+	(DTM_UWB_ALTERNATIVE_PULSE_SHAPE + DTM_UWB_ALTERNATIVE_PULSE_SHAPE_SZ)
+/* If there is a new param, don't forget to update paramtab[] in set_param() and
+ * get_param functions.
+ */
