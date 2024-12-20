@@ -17,7 +17,6 @@
 #include "qmalloc.h"
 
 static task_signal_t investigatorTask;
-
 extern const struct command_s known_subcommands_investigator;
 
 #define INVESTIGATOR_TASK_STACK_SIZE_BYTES       2048
@@ -59,8 +58,6 @@ error_e print_investigator_info(uint8_t *data, uint8_t size, uint8_t *ts, int16_
     return (ret);
 }
 
-
-
 static void InvestigatorTask(void *arg)
 {
     (void)arg;
@@ -72,55 +69,75 @@ static void InvestigatorTask(void *arg)
     {
         qtime_msleep(5);
     }
-
     size = sizeof(pInvestigatorInfo->rxPcktBuf.buf) / sizeof(pInvestigatorInfo->rxPcktBuf.buf[0]);
-
     investigatorTask.Exit = 0;
 
-    lock = qirq_lock();
-    /* Start reception on the Listener. */
-    dwt_rxenable(DWT_START_RX_IMMEDIATE);
-    qirq_unlock(lock);
-
+    // Trigger push button 
+    nrf_gpio_pin_pull_t pull_config = NRF_GPIO_PIN_PULLUP;
+    nrf_gpio_cfg_input(INVESTIGATOR_PUSH_BUTTON_PIN_NUM, pull_config);
+ 
     while (investigatorTask.Exit == 0)
     {
-        /* ISR is delivering RxPckt via circ_buf & Signal.
-         * This is the fastest method. */
-        if (qsignal_wait(investigatorTask.signal, &signal_value, QOSAL_WAIT_FOREVER) != QERR_SUCCESS)
+         
+        diag_printf("Investigator: Waiting for trigger\r\n");
+        /* Wait for trigger from push button*/
+        uint32_t pushbutton = nrf_gpio_pin_read(INVESTIGATOR_PUSH_BUTTON_PIN_NUM);
+        while(pushbutton) // 0 is pushed
         {
-            continue;
+            qtime_msleep_yield(20);
+            pushbutton = nrf_gpio_pin_read(INVESTIGATOR_PUSH_BUTTON_PIN_NUM);
         }
 
-        if (signal_value == STOP_TASK)
-        {
-            break;
-        }
+        /* Start transmitting blinks for initiation and then go to reception for INVESTIGATOR_RECEIVER_TIME_MS [ms] */
+        diag_printf("Investigator: Start initiation\r\n"); 
+        start_investigator_tx();
 
-        lock = qirq_lock();
-        head = pInvestigatorInfo->rxPcktBuf.head;
-        tail = pInvestigatorInfo->rxPcktBuf.tail;
-        qirq_unlock(lock);
-
-        if (CIRC_CNT(head, tail, size) > 0)
+        //diag_printf("Investigator: Start reception\r\n"); 
+        uint64_t start_time_ms = 1000*qtime_get_uptime_us();
+        uint64_t current_time_ms = start_time_ms;
+        uint64_t stop_time_ms = start_time_ms + INVESTIGATOR_RECEIVER_TIME_MS;
+        while(current_time_ms < stop_time_ms)
         {
-#if DEBUG_PRINT
-            rx_investigator_pckt_t *pRx_investigator_Pckt = &pInvestigatorInfo->rxPcktBuf.buf[tail];
-            print_investigator_info(pRx_investigator_Pckt->data,
-                                     pRx_investigator_Pckt->rxDataLen,
-                                     pRx_investigator_Pckt->timeStamp,
-                                     pRx_investigator_Pckt->clock_offset,
-                                     pRx_investigator_Pckt->rssi,
-                                     pRx_investigator_Pckt->fsl);
-#endif
+
+            /* ISR is delivering RxPckt via circ_buf & Signal */
+            if (qsignal_wait(investigatorTask.signal, &signal_value, stop_time_ms-current_time_ms) != QERR_SUCCESS)
+            {
+                break;
+            }
+
+            if (signal_value == STOP_TASK)
+            {
+                break;
+            }
+
             lock = qirq_lock();
-            tail = (tail + 1) & (size - 1);
-            pInvestigatorInfo->rxPcktBuf.tail = tail;
+            head = pInvestigatorInfo->rxPcktBuf.head;
+            tail = pInvestigatorInfo->rxPcktBuf.tail;
             qirq_unlock(lock);
 
-            NotifyFlushTask();
-        }
+            if (CIRC_CNT(head, tail, size) > 0)
+            {
+    #if DEBUG_PRINT
+                rx_investigator_pckt_t *pRx_investigator_Pckt = &pInvestigatorInfo->rxPcktBuf.buf[tail];
+                print_investigator_info(pRx_investigator_Pckt->data,
+                                        pRx_investigator_Pckt->rxDataLen,
+                                        pRx_investigator_Pckt->timeStamp,
+                                        pRx_investigator_Pckt->clock_offset,
+                                        pRx_investigator_Pckt->rssi,
+                                        pRx_investigator_Pckt->fsl);
+    #endif
+                lock = qirq_lock();
+                tail = (tail + 1) & (size - 1);
+                pInvestigatorInfo->rxPcktBuf.tail = tail;
+                qirq_unlock(lock);
 
-        qthread_yield();
+                NotifyFlushTask();
+            }
+            current_time_ms = 1000*qtime_get_uptime_us();
+        }
+        dwt_forcetrxoff(); // Stop RXTX
+        diag_printf("Investigator: Stop reception\r\n"); 
+        qtime_msleep_yield(1000);    
     };
     investigatorTask.Exit = 2;
     while (investigatorTask.Exit == 2)
@@ -169,9 +186,10 @@ static void investigator_setup_tasks(void)
     }
 }
 
-
 void investigator_terminate(void)
 {
+    diag_printf("investigator: Stopped\r\n"); 
+
     /* Need to switch off UWB chip's RX and IRQ before killing tasks. */
     hal_uwb.stop_all_uwb();
 
@@ -185,6 +203,8 @@ void investigator_starter(void const *argument)
 {
     error_e tmp;
 
+    diag_printf("investigator: Started\r\n");
+
     /* Not used. */
     (void)argument;
     /* "RTOS-independent" part : initialization of two-way ranging process */
@@ -194,10 +214,11 @@ void investigator_starter(void const *argument)
     {
         error_handler(1, tmp);
     }
+
     /* "RTOS-based" : setup (not start) all necessary tasks for the Node operation. */
     investigator_setup_tasks();
-    /* IRQ is enabled from MASTER chip and it may receive UWB immediately after this point. */
-    investigator_process_start();
+    /* IRQ is enabled from MASTER chip. */; 
+    hal_uwb.enableIRQ();
 }
 
 

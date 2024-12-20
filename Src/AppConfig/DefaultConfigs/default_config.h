@@ -22,7 +22,7 @@ extern const app_definition_t idle_app[];
 
 /* UWB config. */
 
-#ifndef DUZ_ENABLED
+#ifdef DUZ_ENABLED
 #define LOW_BAUDRATE               1
 #if  LOW_BAUDRATE
 // DUZ: 850Kbs

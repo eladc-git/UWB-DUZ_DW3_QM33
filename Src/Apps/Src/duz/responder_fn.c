@@ -71,5 +71,5 @@ const struct command_s known_app_responder[] __attribute__((section(".known_comm
 };
 
 const struct command_s known_subcommands_responder[] __attribute__((section(".known_app_subcommands"))) = {
-    {"STAT", mAPP, f_responder_stat, COMMENT_RSTAT},
+    {"RSTAT", mAPP, f_responder_stat, COMMENT_RSTAT},
 };

@@ -77,17 +77,19 @@ static void ResponderTask(void *arg)
 
     responderTask.Exit = 0;
 
-    lock = qirq_lock();
-    /* Start reception on the Listener. */
-    dwt_rxenable(DWT_START_RX_IMMEDIATE);
-    qirq_unlock(lock);
-
     while (responderTask.Exit == 0)
     {
+        /* Start reception on the Responder for RESPONDER_RECEIVER_ON_MS [ms]. */
+        lock = qirq_lock();
+        dwt_rxenable(DWT_START_RX_IMMEDIATE);
+        dwt_setrxtimeout(1000*RESPONDER_RECEIVER_ON_MS);
+        qirq_unlock(lock);
+
         /* ISR is delivering RxPckt via circ_buf & Signal.
          * This is the fastest method. */
-        if (qsignal_wait(responderTask.signal, &signal_value, QOSAL_WAIT_FOREVER) != QERR_SUCCESS)
+        if (qsignal_wait(responderTask.signal, &signal_value, RESPONDER_RECEIVER_ON_MS) != QERR_SUCCESS)
         {
+            qtime_msleep_yield(RESPONDER_RECEIVER_OFF_MS);
             continue;
         }
 
@@ -116,11 +118,10 @@ static void ResponderTask(void *arg)
             tail = (tail + 1) & (size - 1);
             pResponderInfo->rxPcktBuf.tail = tail;
             qirq_unlock(lock);
-
             NotifyFlushTask();
         }
-
-        qthread_yield();
+        dwt_forcetrxoff(); // Stop RXTX
+        qtime_msleep_yield(RESPONDER_RECEIVER_OFF_MS);
     };
     responderTask.Exit = 2;
     while (responderTask.Exit == 2)
@@ -172,6 +173,7 @@ static void responder_setup_tasks(void)
 
 void responder_terminate(void)
 {
+    diag_printf("Responder: Stopped\r\n"); 
     /* Need to switch off UWB chip's RX and IRQ before killing tasks. */
     hal_uwb.stop_all_uwb();
 
@@ -186,6 +188,8 @@ void responder_starter(void const *argument)
 {
     error_e tmp;
 
+    diag_printf("Responder: Started\r\n"); 
+
     /* Not used. */
     (void)argument;
     /* "RTOS-independent" part : initialization of two-way ranging process */
@@ -195,10 +199,11 @@ void responder_starter(void const *argument)
     {
         error_handler(1, tmp);
     }
+
     /* "RTOS-based" : setup (not start) all necessary tasks for the Node operation. */
     responder_setup_tasks();
     /* IRQ is enabled from MASTER chip and it may receive UWB immediately after this point. */
-    responder_process_start();
+    hal_uwb.enableIRQ();
 }
 
 

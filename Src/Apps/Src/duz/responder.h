@@ -80,11 +80,10 @@ extern responder_info_t *getResponderInfoPtr(void);
 
 /* responder (responder) */
 void parse_responder_rx(const dwt_cb_data_t *);
-void responder_blink(bool);
+void responder_blink();
 void start_responder_tx();
 
 error_e responder_process_init(void);
-void responder_process_start(void);
 void responder_process_terminate(void);
 void responder_set_mode(int mode);
 int  responder_get_mode(void);

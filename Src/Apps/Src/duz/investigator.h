@@ -83,7 +83,6 @@ void investigator_blink(bool);
 void start_investigator_tx();
 
 error_e investigator_process_init(void);
-void investigator_process_start(void);
 void investigator_process_terminate(void);
 void investigator_set_mode(int mode);
 int  investigator_get_mode(void);

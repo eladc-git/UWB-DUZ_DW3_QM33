@@ -72,5 +72,5 @@ const struct command_s known_app_investigator[] __attribute__((section(".known_c
 };
 
 const struct command_s known_subcommands_investigator[] __attribute__((section(".known_app_subcommands"))) = {
-    {"STAT", mAPP, f_investigator_stat, COMMENT_ISTAT},
+    {"ISTAT", mAPP, f_investigator_stat, COMMENT_ISTAT},
 };

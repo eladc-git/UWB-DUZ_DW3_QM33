@@ -27,7 +27,13 @@
 #define LOG_CONSTANT_D0_E0 51.175 // 10log10(2^17) = 51.175  // See User Manual for more information.
 
 
-static uint8_t tx_msg[] = { 0xC5, 0, 'D', 'E', 'C', 'A', 'W', 'A', 'V', 'E' };
+static uint8_t tx_msg[] = 
+{ 
+    0xBB, 0xBB, 
+    0xFF&(RESPONDER_ID>>24), 0xFF&(RESPONDER_ID>>24), 0xFF&(RESPONDER_ID>>24), 0xFF&(RESPONDER_ID),
+    0xFF, 0xFF, 0xFF, 0xFF 
+ };
+
 #define FRAME_LENGTH (sizeof(tx_msg) + FCS_LEN) // The real length that is going to be transmitted
 
 
@@ -113,7 +119,6 @@ static void rxtx_responder_configure(dwt_config_t *pdwCfg, uint16_t frameFilter)
         error_handler(1, _ERR_INIT);
     }
     dwt_setrxaftertxdelay(0); /**< no any delays set by default : part of config of receiver on Tx sending */
-    dwt_setrxtimeout(0);      /**< no any delays set by default : part of config of receiver on Tx sending */
     dwt_configureframefilter(DWT_FF_DISABLE, 0);
     dwt_writetxfctrl(FRAME_LENGTH, 0, 0); /* Zero offset in TX buffer, no ranging. */
     dwt_configure_rf_port(DWT_RF_PORT_MANUAL_1); // Configure PORT for RXTX
@@ -124,16 +129,15 @@ void responder_configure_uwb(dwt_cb_t cbRxOk, dwt_cb_t cbRxTo, dwt_cb_t cbRxErr)
 {
     dwt_callbacks_s cbs = {0};
     dwt_setlnapamode(DWT_PA_ENABLE | DWT_LNA_ENABLE);   /* Configure TX/RX states to output on GPIOs */
-    dwt_setsniffmode(1, 8, 128);                        /* Configure SNIFF mode. */
 
     cbs.cbRxOk = cbRxOk;
     cbs.cbRxTo = cbRxTo;
     cbs.cbRxErr = cbRxErr;
     dwt_setcallbacks(&cbs);
 
-    dwt_setinterrupt(DWT_INT_TXFRS_BIT_MASK | DWT_INT_RXFCG_BIT_MASK | (DWT_INT_ARFE_BIT_MASK | DWT_INT_RXFSL_BIT_MASK | DWT_INT_RXSTO_BIT_MASK | DWT_INT_RXPHE_BIT_MASK | DWT_INT_RXFCE_BIT_MASK | DWT_INT_RXFTO_BIT_MASK), 0, 2);
+    dwt_setinterrupt(DWT_INT_TXFRS_BIT_MASK | DWT_INT_RXFCG_BIT_MASK | (DWT_INT_ARFE_BIT_MASK | DWT_INT_RXFSL_BIT_MASK |
+                     DWT_INT_RXSTO_BIT_MASK | DWT_INT_RXPHE_BIT_MASK | DWT_INT_RXFCE_BIT_MASK | DWT_INT_RXFTO_BIT_MASK), 0, 2);   
     dwt_configciadiag(DW_CIA_DIAG_LOG_ALL);
-
     dwt_configeventcounters(1);
 
     dwt_app_config_t *dwt_app_config = get_app_dwt_config();
@@ -190,10 +194,10 @@ void parse_responder_rx(const dwt_cb_data_t *rxd)
 }
 
 
-void responder_blink(bool last)
+void responder_blink()
 {
       dwt_writetxdata(FRAME_LENGTH - FCS_LEN, tx_msg, 0); /* Zero offset in TX buffer. */
-      dwt_starttx(last ? DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED : DWT_START_TX_IMMEDIATE);
+      dwt_starttx(DWT_START_TX_IMMEDIATE);
       /* Poll DW IC until TX frame sent event set*/
       waitforsysstatus(NULL, NULL, DWT_INT_TXFRS_BIT_MASK, 0);
       /* Clear TX frame sent event. */
@@ -204,20 +208,18 @@ void start_responder_tx()
 {
     // Start LED to indicate TX
     dwt_setleds(DWT_LEDS_ENABLE | DWT_LEDS_INIT_BLINK); 
-    for (int i=0; i<RESPONDER_BLINK_COUNT-1; i++)
+    for (int i=0; i<RESPONDER_BLINK_COUNT; i++)
     {
-        responder_blink(false);
+        // First wait then blink
         deca_sleep(RESPONDER_BLINK_INTERVAL_MS);
+        responder_blink();
     }
-    // In last transmission, we start the RX back: Will enable the receiver after TX has complete */
-    responder_blink(true);
     // Stop LED
     dwt_setleds(DWT_LEDS_DISABLE);
 }
 
 void rx_responder_cb(const dwt_cb_data_t *rxd)
 {
-
     // -------------------------- -----------------------
     // ----------  Parse RX -----------------------------
     // -------------------------- -----------------------
@@ -227,9 +229,6 @@ void rx_responder_cb(const dwt_cb_data_t *rxd)
     // ----------  Start TX ----------------------------- 
     // --------------------------------------------------
     start_responder_tx();
-
-    // re-enable receiver again - no timeout
-    /* ready to serve next raw reception */
 }
 
 
@@ -243,7 +242,6 @@ void responder_timeout_cb(const dwt_cb_data_t *rxd)
         dwt_configurestsloadiv();
     }
     dwt_readeventcounters(&presponderInfo->event_counts);
-    dwt_rxenable(DWT_START_RX_IMMEDIATE);
 }
 
 void responder_error_cb(const dwt_cb_data_t *rxd)
@@ -290,6 +288,7 @@ error_e responder_process_init()
         return (_ERR_INIT);
     }
 
+    /* Configure SPI to fast rate */
     if (hal_uwb.uwbs != NULL)
     {
         hal_uwb.uwbs->spi->fast_rate(hal_uwb.uwbs->spi->handler);
@@ -314,13 +313,6 @@ error_e responder_process_init()
 }
 
 
-void responder_process_start(void)
-{
-    diag_printf("Responder: Started\r\n"); 
-    hal_uwb.enableIRQ();
-}
-
-
 void responder_process_terminate(void)
 {
     // stop the RTC timer
@@ -330,7 +322,6 @@ void responder_process_terminate(void)
      *
      * */
     
-    diag_printf("Responder: Stopped\r\n"); 
     Rtc.disableIRQ();
     Rtc.setPriorityIRQ();
 

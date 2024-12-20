@@ -26,8 +26,15 @@
 #define LOG_CONSTANT_D0_E0 51.175 // 10log10(2^17) = 51.175  // See User Manual for more information.
 
 
-static uint8_t tx_msg[] = { 0xC5, 0, 'D', 'E', 'C', 'A', 'W', 'A', 'V', 'E' };
+static uint8_t tx_msg[] = 
+{ 
+    0xAA, 0xAA, 
+    0xFF&(INVESTIGATOR_ID>>24), 0xFF&(INVESTIGATOR_ID>>24), 0xFF&(INVESTIGATOR_ID>>24), 0xFF&(INVESTIGATOR_ID),
+    0xFF, 0xFF, 0xFF, 0xFF 
+ };
+
 #define FRAME_LENGTH (sizeof(tx_msg) + FCS_LEN) // The real length that is going to be transmitted
+
 
 void investigator_rssi_cal(int *rssi, int *fsl)
 {
@@ -112,7 +119,6 @@ static void rxtx_investigator_configure(dwt_config_t *pdwCfg, uint16_t frameFilt
         error_handler(1, _ERR_INIT);
     }
     dwt_setrxaftertxdelay(0); /**< no any delays set by default : part of config of receiver on Tx sending */
-    dwt_setrxtimeout(0);      /**< no any delays set by default : part of config of receiver on Tx sending */
     dwt_configureframefilter(DWT_FF_DISABLE, 0);
     dwt_writetxfctrl(FRAME_LENGTH, 0, 0); /* Zero offset in TX buffer, no ranging. */
     dwt_configure_rf_port(DWT_RF_PORT_MANUAL_1); // Configure PORT for RXTX
@@ -123,16 +129,15 @@ void investigator_configure_uwb(dwt_cb_t cbRxOk, dwt_cb_t cbRxTo, dwt_cb_t cbRxE
 {
     dwt_callbacks_s cbs = {0};
     dwt_setlnapamode(DWT_PA_ENABLE | DWT_LNA_ENABLE);   /* Configure TX/RX states to output on GPIOs */
-    dwt_setsniffmode(1, 8, 128);                        /* Configure SNIFF mode. */
 
     cbs.cbRxOk = cbRxOk;
     cbs.cbRxTo = cbRxTo;
     cbs.cbRxErr = cbRxErr;
     dwt_setcallbacks(&cbs);
 
-    dwt_setinterrupt(DWT_INT_TXFRS_BIT_MASK | DWT_INT_RXFCG_BIT_MASK | (DWT_INT_ARFE_BIT_MASK | DWT_INT_RXFSL_BIT_MASK | DWT_INT_RXSTO_BIT_MASK | DWT_INT_RXPHE_BIT_MASK | DWT_INT_RXFCE_BIT_MASK | DWT_INT_RXFTO_BIT_MASK), 0, 2);
+    dwt_setinterrupt(DWT_INT_TXFRS_BIT_MASK | DWT_INT_RXFCG_BIT_MASK | (DWT_INT_ARFE_BIT_MASK | DWT_INT_RXFSL_BIT_MASK |
+                     DWT_INT_RXSTO_BIT_MASK | DWT_INT_RXPHE_BIT_MASK | DWT_INT_RXFCE_BIT_MASK | DWT_INT_RXFTO_BIT_MASK), 0, 2);
     dwt_configciadiag(DW_CIA_DIAG_LOG_ALL);
-
     dwt_configeventcounters(1);
 
     dwt_app_config_t *dwt_app_config = get_app_dwt_config();
@@ -206,6 +211,7 @@ void start_investigator_tx()
     dwt_setleds(DWT_LEDS_ENABLE | DWT_LEDS_INIT_BLINK); 
     for (int i=0; i<INVESTIGATOR_BLINK_COUNT-1; i++)
     {
+        // First blink then wait
         investigator_blink(false);
         deca_sleep(INVESTIGATOR_BLINK_INTERVAL_MS);
     }
@@ -217,19 +223,10 @@ void start_investigator_tx()
 
 void rx_investigator_cb(const dwt_cb_data_t *rxd)
 {
-
     // -------------------------- -----------------------
     // ----------  Parse RX -----------------------------
     // -------------------------- -----------------------
     parse_investigator_rx(rxd);
-
-    // --------------------------------------------------
-    // ----------  Start TX ----------------------------- 
-    // --------------------------------------------------
-    start_investigator_tx();
-
-    // re-enable receiver again - no timeout
-    /* ready to serve next raw reception */
 }
 
 
@@ -243,7 +240,6 @@ void investigator_timeout_cb(const dwt_cb_data_t *rxd)
         dwt_configurestsloadiv();
     }
     dwt_readeventcounters(&pinvestigatorInfo->event_counts);
-    dwt_rxenable(DWT_START_RX_IMMEDIATE);
 }
 
 void investigator_error_cb(const dwt_cb_data_t *rxd)
@@ -256,6 +252,11 @@ void investigator_error_cb(const dwt_cb_data_t *rxd)
 
 error_e investigator_process_init()
 {
+    hal_uwb.init();
+    hal_uwb.irq_init();
+    hal_uwb.disable_irq_and_reset(1);
+    assert(hal_uwb.probe() == DWT_SUCCESS);
+    
     if (!pInvestigatorInfo)
     {
         pInvestigatorInfo = NODE_MALLOC(sizeof(investigator_info_t));
@@ -314,13 +315,6 @@ error_e investigator_process_init()
 }
 
 
-void investigator_process_start(void)
-{
-    diag_printf("investigator: Started\r\n"); 
-    hal_uwb.enableIRQ();
-}
-
-
 void investigator_process_terminate(void)
 {
     // stop the RTC timer
@@ -330,7 +324,6 @@ void investigator_process_terminate(void)
      *
      * */
     
-    diag_printf("Investigator: Stopped\r\n"); 
     Rtc.disableIRQ();
     Rtc.setPriorityIRQ();
 
