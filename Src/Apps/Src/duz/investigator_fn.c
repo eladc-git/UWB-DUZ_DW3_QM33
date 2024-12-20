@@ -10,11 +10,36 @@
 #include "cmd_fn.h"
 #include "qirq.h"
 
-;
+
 const char COMMENT_ISTAT[] = {"Displays the statistics inside the Investigator application."};
 const char COMMENT_INVESTIGATOR[] = {"Duz Investigator."};
 
 extern const app_definition_t helpers_app_investigator[];
+extern bool investigator_calib_mode;
+
+void investigator_params(char *text)
+{
+    char *pch = strtok(text, " -");
+    unsigned int tmp_val = 0;
+    int sz;
+    char err_msg[128];
+    uint8_t cpt_arg = 0;
+    while (pch != NULL)
+    {
+        if (sscanf(pch, "CALIB=%d", &tmp_val) == 1)
+        {
+            if (tmp_val == 0 || tmp_val == 1)
+                investigator_calib_mode = tmp_val;
+            else
+            {
+                sz = sprintf(err_msg, "Incorrect CALIB: %d\r\n", tmp_val);
+                reporter_instance.print(err_msg, sz);
+            }
+        }
+        pch = strtok(NULL, " -");
+        cpt_arg++;
+    }
+}
 
 /**
  * @brief   defaultTask will start investigator user application
@@ -22,6 +47,10 @@ extern const app_definition_t helpers_app_investigator[];
  * */
 REG_FN(f_investigator)
 {
+    investigator_calib_mode = 0;
+    if (text && strchr(text, '-') != NULL)
+        investigator_params(text);
+
     app_definition_t *app_ptr = (app_definition_t *)&helpers_app_investigator[0];
     EventManagerRegisterApp((void *)&app_ptr);
     return (CMD_FN_RET_OK);

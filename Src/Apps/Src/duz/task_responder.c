@@ -19,6 +19,7 @@
 static task_signal_t responderTask;
 
 extern const struct command_s known_subcommands_responder;
+extern bool responder_calib_mode;
 
 #define RESPONDER_TASK_STACK_SIZE_BYTES       2048
 #define MAX_PRINT_FAST_RESPONDER              6
@@ -77,16 +78,29 @@ static void ResponderTask(void *arg)
 
     responderTask.Exit = 0;
 
+    if (responder_calib_mode)
+    {
+        // Calibration Mode
+        diag_printf("Responder: Calibration \r\n"); 
+    }
+
     while (responderTask.Exit == 0)
     {
+
+        if (responder_calib_mode)
+        {
+            start_responder_tx();
+            qtime_msleep_yield(10);
+            continue;
+        }
+
         /* Start reception on the Responder for RESPONDER_RECEIVER_ON_MS [ms]. */
         lock = qirq_lock();
         dwt_rxenable(DWT_START_RX_IMMEDIATE);
         dwt_setrxtimeout(1000*RESPONDER_RECEIVER_ON_MS);
         qirq_unlock(lock);
 
-        /* ISR is delivering RxPckt via circ_buf & Signal.
-         * This is the fastest method. */
+        /* ISR is delivering RxPckt via circ_buf & Signal */
         if (qsignal_wait(responderTask.signal, &signal_value, RESPONDER_RECEIVER_ON_MS) != QERR_SUCCESS)
         {
             qtime_msleep_yield(RESPONDER_RECEIVER_OFF_MS);

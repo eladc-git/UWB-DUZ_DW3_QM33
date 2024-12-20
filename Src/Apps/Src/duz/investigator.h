@@ -79,7 +79,7 @@ extern investigator_info_t *getInvestigatorInfoPtr(void);
 
 /* investigator (investigator) */
 void parse_investigator_rx(const dwt_cb_data_t *);
-void investigator_blink(bool);
+void investigator_blink();
 void start_investigator_tx();
 
 error_e investigator_process_init(void);

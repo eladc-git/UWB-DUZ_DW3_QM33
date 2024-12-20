@@ -18,10 +18,10 @@
 
 static task_signal_t investigatorTask;
 extern const struct command_s known_subcommands_investigator;
+extern bool investigator_calib_mode;
 
 #define INVESTIGATOR_TASK_STACK_SIZE_BYTES       2048
 #define MAX_PRINT_FAST_INVESTIGATOR              6
-
 
 error_e print_investigator_info(uint8_t *data, uint8_t size, uint8_t *ts, int16_t cfo, int rssi, int fsl)
 {
@@ -71,34 +71,50 @@ static void InvestigatorTask(void *arg)
     }
     size = sizeof(pInvestigatorInfo->rxPcktBuf.buf) / sizeof(pInvestigatorInfo->rxPcktBuf.buf[0]);
     investigatorTask.Exit = 0;
-
-    // Trigger push button 
-    nrf_gpio_pin_pull_t pull_config = NRF_GPIO_PIN_PULLUP;
-    nrf_gpio_cfg_input(INVESTIGATOR_PUSH_BUTTON_PIN_NUM, pull_config);
  
+    if (investigator_calib_mode)
+    {
+        // Calibration Mode
+        diag_printf("Investigator: Calibration \r\n"); 
+    }
+    else
+    {
+        // Trigger push button 
+        nrf_gpio_pin_pull_t pull_config = NRF_GPIO_PIN_PULLUP;
+        nrf_gpio_cfg_input(INVESTIGATOR_PUSH_BUTTON_PIN_NUM, pull_config);
+    }
+
     while (investigatorTask.Exit == 0)
     {
          
-        diag_printf("Investigator: Waiting for trigger\r\n");
-        /* Wait for trigger from push button*/
-        uint32_t pushbutton = nrf_gpio_pin_read(INVESTIGATOR_PUSH_BUTTON_PIN_NUM);
-        while(pushbutton) // 0 is pushed
+        if (!investigator_calib_mode)
         {
-            qtime_msleep_yield(20);
-            pushbutton = nrf_gpio_pin_read(INVESTIGATOR_PUSH_BUTTON_PIN_NUM);
+            diag_printf("Investigator: Waiting for trigger\r\n");
+            /* Wait for trigger from push button*/
+            uint32_t pushbutton = nrf_gpio_pin_read(INVESTIGATOR_PUSH_BUTTON_PIN_NUM);
+            while(pushbutton) // 0 is pushed
+            {
+                qtime_msleep_yield(20);
+                pushbutton = nrf_gpio_pin_read(INVESTIGATOR_PUSH_BUTTON_PIN_NUM);
+            }
+
+            /* Start transmitting blinks for initiation and then go to reception for INVESTIGATOR_RECEIVER_TIME_MS [ms] */
+            diag_printf("Investigator: Start initiation for %dms\r\n", (INVESTIGATOR_BLINK_COUNT-1)*INVESTIGATOR_BLINK_INTERVAL_MS); 
+            start_investigator_tx();    
+            
+            /* Start reception on the Responder for RESPONDER_RECEIVER_ON_MS [ms]. */
+            diag_printf("Investigator: Start reception for %dms\r\n", INVESTIGATOR_RECEIVER_TIME_MS); 
         }
 
-        /* Start transmitting blinks for initiation and then go to reception for INVESTIGATOR_RECEIVER_TIME_MS [ms] */
-        diag_printf("Investigator: Start initiation\r\n"); 
-        start_investigator_tx();
-
-        //diag_printf("Investigator: Start reception\r\n"); 
-        uint64_t start_time_ms = 1000*qtime_get_uptime_us();
+        lock = qirq_lock();
+        dwt_rxenable(DWT_START_RX_IMMEDIATE);
+        dwt_setrxtimeout(1000*INVESTIGATOR_RECEIVER_TIME_MS);
+        qirq_unlock(lock);
+        uint64_t start_time_ms = qtime_get_uptime_us()/1000;
         uint64_t current_time_ms = start_time_ms;
         uint64_t stop_time_ms = start_time_ms + INVESTIGATOR_RECEIVER_TIME_MS;
         while(current_time_ms < stop_time_ms)
         {
-
             /* ISR is delivering RxPckt via circ_buf & Signal */
             if (qsignal_wait(investigatorTask.signal, &signal_value, stop_time_ms-current_time_ms) != QERR_SUCCESS)
             {
@@ -130,14 +146,11 @@ static void InvestigatorTask(void *arg)
                 tail = (tail + 1) & (size - 1);
                 pInvestigatorInfo->rxPcktBuf.tail = tail;
                 qirq_unlock(lock);
-
                 NotifyFlushTask();
             }
-            current_time_ms = 1000*qtime_get_uptime_us();
+            current_time_ms = qtime_get_uptime_us()/1000;
         }
-        dwt_forcetrxoff(); // Stop RXTX
-        diag_printf("Investigator: Stop reception\r\n"); 
-        qtime_msleep_yield(1000);    
+        dwt_forcetrxoff(); // Stop RXTX   
     };
     investigatorTask.Exit = 2;
     while (investigatorTask.Exit == 2)

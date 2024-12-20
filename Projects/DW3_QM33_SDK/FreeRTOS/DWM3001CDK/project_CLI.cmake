@@ -16,4 +16,4 @@ set(USE_DUZ 1)
 set(USE_LISTENER 1)
 
 # MAC regions
-set(USE_FIRA 1)
+set(USE_FIRA 0)

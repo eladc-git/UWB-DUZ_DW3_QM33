@@ -11,7 +11,7 @@
 #define INVESTIGATOR_ID                         0x0001
 #define INVESTIGATOR_BLINK_COUNT                100         // Number of blinks to be trasmitt by investigator
 #define INVESTIGATOR_BLINK_INTERVAL_MS          1           // Time [ms] between each blink
-#define INVESTIGATOR_RECEIVER_TIME_MS           200         // Time [ms] for receive to wait for AOA
+#define INVESTIGATOR_RECEIVER_TIME_MS           1000        // Time [ms] for receive to wait for AOA
 #define INVESTIGATOR_PUSH_BUTTON_PIN_NUM        30          // Push button for trigger initiation
 
 // ------------------------ RESPONDER -------------------------------

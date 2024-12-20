@@ -10,22 +10,11 @@
 #include "task_responder.h"
 #include "driver_app_config.h"
 #include <stdint.h>
-#include <math.h>
 #include "utils.h"
 #include "qirq.h"
 
 
-// ----------------------------------------------------------------------------
-
-#define NODE_MALLOC qmalloc
-#define NODE_FREE   qfree
-
-#define RX_CODE_THRESHOLD  8      // For 64 MHz PRF the RX code is 9.
-#define ALPHA_PRF_16       113.8  // Constant A for PRF of 16 MHz. See User Manual for more information.
-#define ALPHA_PRF_64       120.7  // Constant A for PRF of 64 MHz. See User Manual for more information.
-#define LOG_CONSTANT_C0    63.2   // 10log10(2^21) = 63.2    // See User Manual for more information.
-#define LOG_CONSTANT_D0_E0 51.175 // 10log10(2^17) = 51.175  // See User Manual for more information.
-
+bool responder_calib_mode = 0;
 
 static uint8_t tx_msg[] = 
 { 
@@ -36,61 +25,6 @@ static uint8_t tx_msg[] =
 
 #define FRAME_LENGTH (sizeof(tx_msg) + FCS_LEN) // The real length that is going to be transmitted
 
-
-void responder_rssi_cal(int *rssi, int *fsl)
-{
-    dwt_nlos_alldiag_t all_diag;
-    uint8_t D;
-    dwt_config_t *dwt_config = get_dwt_config();
-
-    // All float variables used for recording different diagnostic results and probability.
-    float ip_alpha, log_constant = 0;
-    float ip_f1, ip_f2, ip_f3, ip_n, ip_cp, ip_rsl, ip_fsl;
-
-    uint32_t dev_id = dwt_readdevid();
-
-    if ((dev_id == (uint32_t)DWT_DW3000_DEV_ID) || (dev_id == (uint32_t)DWT_DW3000_PDOA_DEV_ID))
-    {
-        log_constant = LOG_CONSTANT_C0;
-    }
-    else
-    {
-        log_constant = LOG_CONSTANT_D0_E0;
-    }
-
-    // Select IPATOV to read Ipatov diagnostic registers from API function dwt_nlos_alldiag()
-    all_diag.diag_type = IPATOV;
-    dwt_nlos_alldiag(&all_diag);
-    ip_alpha = (dwt_config->rxCode > RX_CODE_THRESHOLD) ? (-(ALPHA_PRF_64 + 1)) : -(ALPHA_PRF_16);
-    // ip_alpha = (config->rxCode > RX_CODE_THRESHOLD) ? (-(ALPHA_PRF_64 + 1)) : -(ALPHA_PRF_16);
-    ip_n = all_diag.accumCount; // The number of preamble symbols accumulated
-    ip_f1 = all_diag.F1 / 4;    // The First Path Amplitude (point 1) magnitude value (it has 2 fractional bits),
-    ip_f2 = all_diag.F2 / 4;    // The First Path Amplitude (point 2) magnitude value (it has 2 fractional bits),
-    ip_f3 = all_diag.F3 / 4;    // The First Path Amplitude (point 3) magnitude value (it has 2 fractional bits),
-    ip_cp = all_diag.cir_power;
-
-    D = all_diag.D * 6;
-
-    // For IPATOV
-    ip_n *= ip_n;
-    ip_f1 *= ip_f1;
-    ip_f2 *= ip_f2;
-    ip_f3 *= ip_f3;
-
-    // For the CIR Ipatov.
-    ip_rsl = 10 * log10((float)ip_cp / ip_n) + ip_alpha + log_constant + D;
-    ip_fsl = 10 * log10(((ip_f1 + ip_f2 + ip_f3) / ip_n)) + ip_alpha + D;
-    if ((ip_rsl < -120) || (ip_rsl > 0))
-    {
-        ip_rsl = 0;
-    }
-    if ((ip_fsl < -120) || (ip_fsl > 0))
-    {
-        ip_fsl = 0;
-    }
-    *rssi = (int)(ip_rsl * 100);
-    *fsl = (int)(ip_fsl * 100);
-}
 
 void responder_readrxtimestamp(uint8_t *timestamp)
 {
@@ -172,7 +106,7 @@ void parse_responder_rx(const dwt_cb_data_t *rxd)
 
         p->rxDataLen = MIN(rxd->datalength, sizeof(p->data));
         dwt_readrxdata((uint8_t *)&p->data, p->rxDataLen, 0); // Raw message
-        responder_rssi_cal(&p->rssi, &p->fsl);
+        rssi_cal(&p->rssi, &p->fsl);
 
         if (responder_task_started()) // RTOS : responderTask can be not started yet
         {
@@ -198,10 +132,6 @@ void responder_blink()
 {
       dwt_writetxdata(FRAME_LENGTH - FCS_LEN, tx_msg, 0); /* Zero offset in TX buffer. */
       dwt_starttx(DWT_START_TX_IMMEDIATE);
-      /* Poll DW IC until TX frame sent event set*/
-      waitforsysstatus(NULL, NULL, DWT_INT_TXFRS_BIT_MASK, 0);
-      /* Clear TX frame sent event. */
-      dwt_writesysstatuslo(DWT_INT_TXFRS_BIT_MASK);
 }
 
 void start_responder_tx()

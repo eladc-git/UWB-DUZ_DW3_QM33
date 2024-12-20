@@ -14,6 +14,31 @@ const char COMMENT_RSTAT[] = {"Displays the statistics inside the Duz Responder 
 const char COMMENT_RESPONDER[] = {"Duz Responder."};
 
 extern const app_definition_t helpers_app_responder[];
+extern bool responder_calib_mode;
+
+void responder_params(char *text)
+{
+    char *pch = strtok(text, " -");
+    unsigned int tmp_val = 0;
+    int sz;
+    char err_msg[128];
+    uint8_t cpt_arg = 0;
+    while (pch != NULL)
+    {
+        if (sscanf(pch, "CALIB=%d", &tmp_val) == 1)
+        {
+            if (tmp_val == 0 || tmp_val == 1)
+                responder_calib_mode = tmp_val;
+            else
+            {
+                sz = sprintf(err_msg, "Incorrect CALIB: %d\r\n", tmp_val);
+                reporter_instance.print(err_msg, sz);
+            }
+        }
+        pch = strtok(NULL, " -");
+        cpt_arg++;
+    }
+}
 
 /**
  * @brief   defaultTask will start responder user application
@@ -21,6 +46,10 @@ extern const app_definition_t helpers_app_responder[];
  * */
 REG_FN(f_responder)
 {
+    responder_calib_mode = 0;
+    if (text && strchr(text, '-') != NULL)
+        responder_params(text);
+
     app_definition_t *app_ptr = (app_definition_t *)&helpers_app_responder[0];
     EventManagerRegisterApp((void *)&app_ptr);
     return (CMD_FN_RET_OK);
