@@ -11,8 +11,6 @@ extern "C" {
 #include "duz_app_config.h"
 #include "reporter.h"
 
-#define investigator_DATA 2
-
 
 //-----------------------------------------------------------------------------
 /*
@@ -31,9 +29,15 @@ struct rx_investigator_pckt_s
     uint8_t data[EVENT_BUF_L_SIZE];
     uint8_t timeStamp[TS_40B_SIZE]; /* Full TimeStamp */
     uint32_t status;
+    uint32_t id;
+    uint32_t seq_count;
     int rssi;
     int fsl;
     int16_t clock_offset;
+    uint32_t pdoa1;
+    uint32_t pdoa2;
+    float azimut;
+    float elevation;
 };
 
 typedef struct rx_investigator_pckt_s rx_investigator_pckt_t;

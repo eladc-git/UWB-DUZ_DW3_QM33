@@ -25,30 +25,22 @@ extern bool responder_calib_mode;
 #define MAX_PRINT_FAST_RESPONDER              6
 
 
-error_e print_responder_info(uint8_t *data, uint8_t size, uint8_t *ts, int16_t cfo, int rssi, int fsl)
+error_e print_responder_info(uint32_t id, uint32_t seq_count, uint8_t* ts, int16_t cfo, int rssi, int fsl)
 {
     error_e ret = _ERR_Cannot_Alloc_Memory;
-
-    uint32_t cnt;
     uint16_t hlen;
-    int      cfo_pphm;
     char     *str;
 
     str = qmalloc(MAX_STR_SIZE);
-    //size = MIN((sizeof(str) - 21) / 3, size); // 21 is an overhead
     if (str)
     {
 
         hlen = sprintf(str, "JS%04X", 0x5A5A); // reserve space for length of JS object
-        sprintf(&str[strlen(str)], "{DATA:[");
-        // Loop over the received data
-        for (cnt = 0; cnt < size; cnt++)
-        {
-            sprintf(&str[strlen(str)], "%02X,", data[cnt]); // Add the byte and the delimiter - "XX,"
-        }
-        sprintf(&str[strlen(str) - 1], "], TS4ns:0x%02X%02X%02X%02X, ", ts[4], ts[3], ts[2], ts[1]);
-        cfo_pphm = (int)((float)cfo * (CLOCK_OFFSET_PPM_TO_RATIO * 1e6 * 100));
-        sprintf(&str[strlen(str)], "CFO:%d, ", cfo_pphm);
+        sprintf(&str[strlen(str)], "{");
+        sprintf(&str[strlen(str)], "ID:0x%08lX, ", id);
+        sprintf(&str[strlen(str)], "SEQ:%lu, ", seq_count);
+        sprintf(&str[strlen(str)], "TS4ns:0x%02X%02X%02X%02X, ", ts[4], ts[3], ts[2], ts[1]);
+        sprintf(&str[strlen(str)], "CFO:%d, ", (int)((float)cfo * (CLOCK_OFFSET_PPM_TO_RATIO * 1e6 * 100)));
         sprintf(&str[strlen(str)], "rssi:%d.%02ddBm, fsl:%d.%02ddBm", rssi / 100, (rssi * -1) % 100, fsl / 100, (fsl * -1) % 100);
         sprintf(&str[strlen(str)], "%s", "\r\n");
         sprintf(&str[2], "%04X", strlen(str) - hlen);   // add formatted 4X of length, this will erase first '{'
@@ -81,7 +73,7 @@ static void ResponderTask(void *arg)
     if (responder_calib_mode)
     {
         // Calibration Mode
-        diag_printf("Responder: Calibration \r\n"); 
+        diag_printf("Responder: Calibration (Only TX)\r\n"); 
     }
 
     while (responderTask.Exit == 0)
@@ -121,8 +113,8 @@ static void ResponderTask(void *arg)
         {
 #if DEBUG_PRINT
             rx_responder_pckt_t *pRx_responder_Pckt = &pResponderInfo->rxPcktBuf.buf[tail];
-            print_responder_info(pRx_responder_Pckt->data,
-                                pRx_responder_Pckt->rxDataLen,
+            print_responder_info(pRx_responder_Pckt->id,
+                                pRx_responder_Pckt->seq_count,
                                 pRx_responder_Pckt->timeStamp,
                                 pRx_responder_Pckt->clock_offset,
                                 pRx_responder_Pckt->rssi,
@@ -151,7 +143,7 @@ void responder_task_notify(void)
         // Sends the Signal to the application level via OS kernel.
         // This will add a small delay of few us, but
         // this method make sense from a program structure point of view.
-        if (qsignal_raise(responderTask.signal, responder_DATA) == 0x80000000)
+        if (qsignal_raise(responderTask.signal, 2) == 0x80000000)
         {
             error_handler(1, _ERR_Signal_Bad);
         }

@@ -23,31 +23,25 @@ extern bool investigator_calib_mode;
 #define INVESTIGATOR_TASK_STACK_SIZE_BYTES       2048
 #define MAX_PRINT_FAST_INVESTIGATOR              6
 
-error_e print_investigator_info(uint8_t *data, uint8_t size, uint8_t *ts, int16_t cfo, int rssi, int fsl)
+error_e print_investigator_info(uint32_t id, uint32_t seq_count, uint8_t *ts, int16_t cfo, int rssi, int fsl, int pdoa1, int pdoa2, float azimut, float elevation)
 {
     error_e ret = _ERR_Cannot_Alloc_Memory;
-
-    uint16_t cnt;
     uint16_t hlen;
-    int      cfo_pphm;
     char     *str;
 
     str = qmalloc(MAX_STR_SIZE);
-    //size = MIN((sizeof(str) - 21) / 3, size); // 21 is an overhead
     if (str)
     {
 
         hlen = sprintf(str, "JS%04X", 0x5A5A); // reserve space for length of JS object
-        sprintf(&str[strlen(str)], "{DATA:[");
-        // Loop over the received data
-        for (cnt = 0; cnt < size; cnt++)
-        {
-            sprintf(&str[strlen(str)], "%02X,", data[cnt]); // Add the byte and the delimiter - "XX,"
-        }
-        sprintf(&str[strlen(str) - 1], "], TS4ns:0x%02X%02X%02X%02X, ", ts[4], ts[3], ts[2], ts[1]);
-        cfo_pphm = (int)((float)cfo * (CLOCK_OFFSET_PPM_TO_RATIO * 1e6 * 100));
-        sprintf(&str[strlen(str)], "CFO:%d, ", cfo_pphm);
-        sprintf(&str[strlen(str)], "rssi:%d.%02ddBm, fsl:%d.%02ddBm", rssi / 100, (rssi * -1) % 100, fsl / 100, (fsl * -1) % 100);
+        sprintf(&str[strlen(str)], "{");
+        sprintf(&str[strlen(str)], "ID:0x%08lX, ", id);
+        sprintf(&str[strlen(str)], "SEQ:%lu, ", seq_count);
+        sprintf(&str[strlen(str)], "TS4ns:0x%02X%02X%02X%02X, ", ts[4], ts[3], ts[2], ts[1]);
+        sprintf(&str[strlen(str)], "CFO:%d, ", (int)((float)cfo * (CLOCK_OFFSET_PPM_TO_RATIO * 1e6 * 100)));
+        sprintf(&str[strlen(str)], "rssi:%d.%02ddBm, fsl:%d.%02ddBm, ", rssi / 100, (rssi * -1) % 100, fsl / 100, (fsl * -1) % 100);
+        sprintf(&str[strlen(str)], "pdoa1:%d, pdoa2:%d, ", pdoa1, pdoa2);
+        sprintf(&str[strlen(str)], "azimut:%.1f, elevation:%.1f", azimut, elevation);
         sprintf(&str[strlen(str)], "%s", "\r\n");
         sprintf(&str[2], "%04X", strlen(str) - hlen);   // add formatted 4X of length, this will erase first '{'
         str[hlen] = '{';                                // restore the start bracket
@@ -75,7 +69,7 @@ static void InvestigatorTask(void *arg)
     if (investigator_calib_mode)
     {
         // Calibration Mode
-        diag_printf("Investigator: Calibration \r\n"); 
+        diag_printf("Investigator: Calibration (Only RX)\r\n"); 
     }
     else
     {
@@ -108,7 +102,6 @@ static void InvestigatorTask(void *arg)
 
         lock = qirq_lock();
         dwt_rxenable(DWT_START_RX_IMMEDIATE);
-        dwt_setrxtimeout(1000*INVESTIGATOR_RECEIVER_TIME_MS);
         qirq_unlock(lock);
         uint64_t start_time_ms = qtime_get_uptime_us()/1000;
         uint64_t current_time_ms = start_time_ms;
@@ -135,12 +128,16 @@ static void InvestigatorTask(void *arg)
             {
     #if DEBUG_PRINT
                 rx_investigator_pckt_t *pRx_investigator_Pckt = &pInvestigatorInfo->rxPcktBuf.buf[tail];
-                print_investigator_info(pRx_investigator_Pckt->data,
-                                        pRx_investigator_Pckt->rxDataLen,
+                print_investigator_info(pRx_investigator_Pckt->id,
+                                        pRx_investigator_Pckt->seq_count,
                                         pRx_investigator_Pckt->timeStamp,
                                         pRx_investigator_Pckt->clock_offset,
                                         pRx_investigator_Pckt->rssi,
-                                        pRx_investigator_Pckt->fsl);
+                                        pRx_investigator_Pckt->fsl,
+                                        pRx_investigator_Pckt->pdoa1,
+                                        pRx_investigator_Pckt->pdoa2,
+                                        pRx_investigator_Pckt->azimut,
+                                        pRx_investigator_Pckt->elevation);
     #endif
                 lock = qirq_lock();
                 tail = (tail + 1) & (size - 1);
@@ -166,7 +163,7 @@ void investigator_task_notify(void)
         // Sends the Signal to the application level via OS kernel.
         // This will add a small delay of few us, but
         // this method make sense from a program structure point of view.
-        if (qsignal_raise(investigatorTask.signal, investigator_DATA) == 0x80000000)
+        if (qsignal_raise(investigatorTask.signal, 2) == 0x80000000)
         {
             error_handler(1, _ERR_Signal_Bad);
         }

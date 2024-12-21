@@ -15,12 +15,13 @@
 
 
 bool responder_calib_mode = 0;
+uint32_t responder_seq_counter = 0;
 
 static uint8_t tx_msg[] = 
 { 
-    0xBB, 0xBB, 
-    0xFF&(RESPONDER_ID>>24), 0xFF&(RESPONDER_ID>>24), 0xFF&(RESPONDER_ID>>24), 0xFF&(RESPONDER_ID),
-    0xFF, 0xFF, 0xFF, 0xFF 
+    0xBB, 0xBB, // Responder indicator
+    0xFF&(RESPONDER_ID>>24), 0xFF&(RESPONDER_ID>>24), 0xFF&(RESPONDER_ID>>24), 0xFF&(RESPONDER_ID), // ID
+    0x00, 0x00, 0x00, 0x00,  // blink counter
  };
 
 #define FRAME_LENGTH (sizeof(tx_msg) + FCS_LEN) // The real length that is going to be transmitted
@@ -56,6 +57,15 @@ static void rxtx_responder_configure(dwt_config_t *pdwCfg, uint16_t frameFilter)
     dwt_configureframefilter(DWT_FF_DISABLE, 0);
     dwt_writetxfctrl(FRAME_LENGTH, 0, 0); /* Zero offset in TX buffer, no ranging. */
     dwt_configure_rf_port(DWT_RF_PORT_MANUAL_1); // Configure PORT for RXTX
+
+     /* Configure the TX spectrum parameters (power, PG delay and PG count) */
+    dwt_txconfig_t dwt_txconfig = 
+    {
+        0x27,       /* PG delay. */
+        0xffffffff, /* TX power. */
+        0x0         /*PG count*/
+    };
+    dwt_configuretxrf(&dwt_txconfig);
 }
 
 
@@ -107,6 +117,8 @@ void parse_responder_rx(const dwt_cb_data_t *rxd)
         p->rxDataLen = MIN(rxd->datalength, sizeof(p->data));
         dwt_readrxdata((uint8_t *)&p->data, p->rxDataLen, 0); // Raw message
         rssi_cal(&p->rssi, &p->fsl);
+        p->id = *(uint32_t*)(&p->data[2]); // ID
+        p->seq_count = *(uint32_t*)(&p->data[6]); // Sequence count
 
         if (responder_task_started()) // RTOS : responderTask can be not started yet
         {
@@ -143,6 +155,8 @@ void start_responder_tx()
         // First wait then blink
         deca_sleep(RESPONDER_BLINK_INTERVAL_MS);
         responder_blink();
+        // Increment counter
+        *(uint32_t*)&tx_msg[6] = responder_seq_counter++;
     }
     // Stop LED
     dwt_setleds(DWT_LEDS_DISABLE);

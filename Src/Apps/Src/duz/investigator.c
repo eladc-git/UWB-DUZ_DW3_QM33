@@ -16,12 +16,13 @@
 
 
 bool investigator_calib_mode = 0;
+uint32_t investigator_seq_counter = 0;
 
 static uint8_t tx_msg[] = 
 { 
-    0xAA, 0xAA, 
-    0xFF&(INVESTIGATOR_ID>>24), 0xFF&(INVESTIGATOR_ID>>24), 0xFF&(INVESTIGATOR_ID>>24), 0xFF&(INVESTIGATOR_ID),
-    0xFF, 0xFF, 0xFF, 0xFF 
+    0xAA, 0xAA, // Investigator indicator
+    0xFF&(INVESTIGATOR_ID>>24), 0xFF&(INVESTIGATOR_ID>>24), 0xFF&(INVESTIGATOR_ID>>24), 0xFF&(INVESTIGATOR_ID), // ID
+    0x00, 0x00, 0x00, 0x00, // blink counter
  };
 
 #define FRAME_LENGTH (sizeof(tx_msg) + FCS_LEN) // The real length that is going to be transmitted
@@ -58,6 +59,15 @@ static void rxtx_investigator_configure(dwt_config_t *pdwCfg, uint16_t frameFilt
     dwt_configureframefilter(DWT_FF_DISABLE, 0);
     dwt_writetxfctrl(FRAME_LENGTH, 0, 0); /* Zero offset in TX buffer, no ranging. */
     dwt_configure_rf_port(DWT_RF_PORT_MANUAL_1); // Configure PORT for RXTX
+
+     /* Configure the TX spectrum parameters (power, PG delay and PG count) */
+    dwt_txconfig_t dwt_txconfig = 
+    {
+        0x27,       /* PG delay. */
+        0xffffffff, /* TX power. */
+        0x0         /*PG count*/
+    };
+    dwt_configuretxrf(&dwt_txconfig);
 }
 
 
@@ -108,13 +118,17 @@ void parse_investigator_rx(const dwt_cb_data_t *rxd)
 
         p->rxDataLen = MIN(rxd->datalength, sizeof(p->data));
         dwt_readrxdata((uint8_t *)&p->data, p->rxDataLen, 0); // Raw message
-        rssi_cal(&p->rssi, &p->fsl);
+        rssi_cal(&p->rssi, &p->fsl); // Calc rssi
+        p->id = *(uint32_t*)(&p->data[2]); // ID
+        p->seq_count = *(uint32_t*)(&p->data[6]); // Sequence count
+        p->pdoa1 = dwt_readpdoa(); // Pdoa
 
         if (investigator_task_started()) // RTOS : investigatorTask can be not started yet
         {
             head = (head + 1) & (size - 1);
             pinvestigatorInfo->rxPcktBuf.head = head; // ISR level : do not need to protect
         }
+
     }
 
     investigator_task_notify();
@@ -126,7 +140,11 @@ void parse_investigator_rx(const dwt_cb_data_t *rxd)
         dwt_configurestsloadiv();
     }
 
-    dwt_readeventcounters(&pinvestigatorInfo->event_counts); // take a snapshot of event counters
+    /* Take a snapshot of event counters. */
+    dwt_readeventcounters(&pinvestigatorInfo->event_counts);
+
+    /* ready to serve next raw reception */
+    dwt_rxenable(DWT_START_RX_IMMEDIATE); // Enable RX back
 }
 
 
@@ -149,6 +167,8 @@ void start_investigator_tx()
     }
     // Stop LED
     dwt_setleds(DWT_LEDS_DISABLE);
+    // Increment counter
+    *(uint32_t*)&tx_msg[6] = investigator_seq_counter++; 
 }
 
 void rx_investigator_cb(const dwt_cb_data_t *rxd)
