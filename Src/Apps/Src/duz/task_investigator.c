@@ -14,6 +14,7 @@
 #include "qirq.h"
 #include "deca_dbg.h"
 #include "duz_app_config.h"
+#include "utils.h"
 #include "qmalloc.h"
 
 static task_signal_t investigatorTask;
@@ -103,13 +104,15 @@ static void InvestigatorTask(void *arg)
         lock = qirq_lock();
         dwt_rxenable(DWT_START_RX_IMMEDIATE);
         qirq_unlock(lock);
-        uint64_t start_time_ms = qtime_get_uptime_us()/1000;
-        uint64_t current_time_ms = start_time_ms;
-        uint64_t stop_time_ms = start_time_ms + INVESTIGATOR_RECEIVER_TIME_MS;
+
+        int64_t start_time_ms = qtime_get_uptime_us()/1000;
+        int64_t current_time_ms = start_time_ms;
+        int64_t stop_time_ms = start_time_ms + INVESTIGATOR_RECEIVER_TIME_MS;
+
         while(current_time_ms < stop_time_ms)
         {
             /* ISR is delivering RxPckt via circ_buf & Signal */
-            if (qsignal_wait(investigatorTask.signal, &signal_value, stop_time_ms-current_time_ms) != QERR_SUCCESS)
+            if (qsignal_wait(investigatorTask.signal, &signal_value, stop_time_ms-start_time_ms) != QERR_SUCCESS)
             {
                 break;
             }

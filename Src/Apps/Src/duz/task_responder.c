@@ -79,6 +79,7 @@ static void ResponderTask(void *arg)
     while (responderTask.Exit == 0)
     {
 
+        // ----------  Calibration Mode ----------- //  
         if (responder_calib_mode)
         {
             start_responder_tx();
@@ -86,6 +87,7 @@ static void ResponderTask(void *arg)
             continue;
         }
 
+        // ----------  Operation Mode ------------- //  
         /* Start reception on the Responder for RESPONDER_RECEIVER_ON_MS [ms]. */
         lock = qirq_lock();
         dwt_rxenable(DWT_START_RX_IMMEDIATE);
@@ -126,7 +128,12 @@ static void ResponderTask(void *arg)
             qirq_unlock(lock);
             NotifyFlushTask();
         }
-        dwt_forcetrxoff(); // Stop RXTX
+        // ----------  Start TX ----------- //
+        qtime_msleep_yield(INVESTIGATOR_TX_TIME_MS);
+        start_responder_tx();
+
+        // Stop RXTX
+        dwt_forcetrxoff(); 
         qtime_msleep_yield(RESPONDER_RECEIVER_OFF_MS);
     };
     responderTask.Exit = 2;

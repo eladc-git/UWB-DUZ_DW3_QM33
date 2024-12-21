@@ -1,6 +1,16 @@
 #include "utils.h"
 
 
+uint32_t get_dwt_time_ms()
+{
+    return dwt_readsystimestamphi32()/125000;
+}
+
+float pdoa2degree(uint32_t pdoa)
+{
+   return ((float)pdoa / (1 << 11)) * 180 / M_PI; 
+}
+
 void rssi_cal(int *rssi, int *fsl)
 {
     dwt_nlos_alldiag_t all_diag;

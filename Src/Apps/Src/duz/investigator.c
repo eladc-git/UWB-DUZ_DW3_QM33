@@ -122,6 +122,7 @@ void parse_investigator_rx(const dwt_cb_data_t *rxd)
         p->id = *(uint32_t*)(&p->data[2]); // ID
         p->seq_count = *(uint32_t*)(&p->data[6]); // Sequence count
         p->pdoa1 = dwt_readpdoa(); // Pdoa
+        p->azimut = pdoa2degree(p->pdoa1);
 
         if (investigator_task_started()) // RTOS : investigatorTask can be not started yet
         {
@@ -144,7 +145,7 @@ void parse_investigator_rx(const dwt_cb_data_t *rxd)
     dwt_readeventcounters(&pinvestigatorInfo->event_counts);
 
     /* ready to serve next raw reception */
-    dwt_rxenable(DWT_START_RX_IMMEDIATE); // Enable RX back
+    dwt_rxenable(DWT_START_RX_IMMEDIATE);
 }
 
 
@@ -190,6 +191,8 @@ void investigator_timeout_cb(const dwt_cb_data_t *rxd)
         dwt_configurestsloadiv();
     }
     dwt_readeventcounters(&pinvestigatorInfo->event_counts);
+    /* ready to serve next raw reception */
+    dwt_rxenable(DWT_START_RX_IMMEDIATE);
 }
 
 void investigator_error_cb(const dwt_cb_data_t *rxd)
