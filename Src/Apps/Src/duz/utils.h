@@ -25,8 +25,7 @@
 #define LOG_CONSTANT_D0_E0 51.175 // 10log10(2^17) = 51.175  // See User Manual for more information.
 #define M_PI		       3.14159265358979323846
 
-uint32_t get_dwt_time_ms();
-float pdoa2degree(uint32_t);
+float pdoa2degree(int16_t, int16_t);
 void rssi_cal(int *, int *);
 void do_nothing(char *s, ...);
 

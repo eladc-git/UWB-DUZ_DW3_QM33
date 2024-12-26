@@ -17,6 +17,8 @@
 
 bool investigator_calib_mode = 0;
 uint32_t investigator_seq_counter = 0;
+int16_t calib_val = PDOA1_CALIB_VAL;
+
 
 static uint8_t tx_msg[] = 
 { 
@@ -122,7 +124,7 @@ void parse_investigator_rx(const dwt_cb_data_t *rxd)
         p->id = *(uint32_t*)(&p->data[2]); // ID
         p->seq_count = *(uint32_t*)(&p->data[6]); // Sequence count
         p->pdoa1 = dwt_readpdoa(); // Pdoa
-        p->azimut = pdoa2degree(p->pdoa1);
+        p->azimut = pdoa2degree(p->pdoa1, calib_val);
 
         if (investigator_task_started()) // RTOS : investigatorTask can be not started yet
         {

@@ -35,8 +35,8 @@ extern const app_definition_t idle_app[];
 #define APP_DEFAULT_PHRMODE        DWT_PHRMODE_STD
 #define APP_DEFAULT_PHRRATE        DWT_PHRRATE_STD
 #define APP_DEFAULT_SFDTO          (1024 + 1 + 16 - 16)
-#define APP_DEFAULT_STS_MODE       DWT_STS_MODE_OFF
-#define APP_DEFAULT_STS_LENGTH     DWT_STS_LEN_64
+#define APP_DEFAULT_STS_MODE       DWT_STS_MODE_1 | DWT_STS_MODE_SDC
+#define APP_DEFAULT_STS_LENGTH     DWT_STS_LEN_256
 #else
 // DUZ: 6.8Mbs
 #define APP_DEFAULT_CHANNEL        5
@@ -48,8 +48,8 @@ extern const app_definition_t idle_app[];
 #define APP_DEFAULT_PHRMODE        DWT_PHRMODE_STD
 #define APP_DEFAULT_PHRRATE        DWT_PHRRATE_STD
 #define APP_DEFAULT_SFDTO          (64 + 1 + 8 - 8)
-#define APP_DEFAULT_STS_MODE       DWT_STS_MODE_1
-#define APP_DEFAULT_STS_LENGTH     DWT_STS_LEN_64
+#define APP_DEFAULT_STS_MODE       DWT_STS_MODE_1 | DWT_STS_MODE_SDC
+#define APP_DEFAULT_STS_LENGTH     DWT_STS_LEN_256
 #endif
 #else
 // Default

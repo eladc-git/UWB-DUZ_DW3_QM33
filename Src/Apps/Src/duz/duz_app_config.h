@@ -14,6 +14,8 @@
 #define INVESTIGATOR_RECEIVER_TIME_MS           400         // Time [ms] for receive to wait for AOA
 #define INVESTIGATOR_TX_TIME_MS                 (INVESTIGATOR_BLINK_COUNT-1)*INVESTIGATOR_BLINK_INTERVAL_MS
 #define INVESTIGATOR_PUSH_BUTTON_PIN_NUM        30          // Push button for trigger initiation
+#define PDOA1_CALIB_VAL                         0           // TODO: move to OTP
+#define PDOA2_CALIB_VAL                         0           // TODO: move to OTP
 
 // ------------------------ RESPONDER -------------------------------
 #define RESPONDER_ID                            0x22222222

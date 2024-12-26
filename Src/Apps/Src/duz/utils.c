@@ -1,14 +1,9 @@
 #include "utils.h"
 
 
-uint32_t get_dwt_time_ms()
+float pdoa2degree(int16_t pdoa, int16_t calib_val)
 {
-    return dwt_readsystimestamphi32()/125000;
-}
-
-float pdoa2degree(uint32_t pdoa)
-{
-   return ((float)pdoa / (1 << 11)) * 180 / M_PI; 
+   return ((float)(pdoa-calib_val) / (1 << 11)) * 180 / M_PI; 
 }
 
 void rssi_cal(int *rssi, int *fsl)
