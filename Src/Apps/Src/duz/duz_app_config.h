@@ -18,7 +18,7 @@
 // ------------------------ RESPONDER -------------------------------
 #define RESPONDER_ID                            0x22222222
 #define RESPONDER_RECEIVER_ON_MS                5           // Time [ms] for receiver to be ON for getting initiations
-#define RESPONDER_RECEIVER_OFF_MS               100         // Time [ms] for receiver to be OFF
+#define RESPONDER_RECEIVER_OFF_MS               200         // Time [ms] for receiver to be OFF
 #define RESPONDER_BLINK_COUNT                   3           // Number of blinks to be trasmitt by responder
 #define RESPONDER_BLINK_INTERVAL_MS             100         // Time [ms] between each blink
 

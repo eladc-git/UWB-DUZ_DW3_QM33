@@ -65,4 +65,7 @@ void rssi_cal(int *rssi, int *fsl)
     *fsl = (int)(ip_fsl * 100);
 }
 
-
+void do_nothing(char *s, ...)
+{
+    //Replacement for diag_printf
+}

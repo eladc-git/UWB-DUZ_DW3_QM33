@@ -14,6 +14,7 @@
 #include "deca_dbg.h"
 #include "duz_app_config.h"
 #include "qmalloc.h"
+#include "utils.h"
 
 
 static task_signal_t responderTask;
@@ -73,7 +74,7 @@ static void ResponderTask(void *arg)
     if (responder_calib_mode)
     {
         // Calibration Mode
-        diag_printf("Responder: Calibration (Only TX)\r\n"); 
+        debug_print("Responder: Calibration (Only TX)\r\n"); 
     }
 
     while (responderTask.Exit == 0)
@@ -186,7 +187,7 @@ static void responder_setup_tasks(void)
 
 void responder_terminate(void)
 {
-    diag_printf("Responder: Stopped\r\n"); 
+    debug_print("Responder: Stopped\r\n"); 
     /* Need to switch off UWB chip's RX and IRQ before killing tasks. */
     hal_uwb.stop_all_uwb();
 
@@ -201,7 +202,7 @@ void responder_starter(void const *argument)
 {
     error_e tmp;
 
-    diag_printf("Responder: Started\r\n"); 
+    debug_print("Responder: Started\r\n"); 
 
     /* Not used. */
     (void)argument;

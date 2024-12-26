@@ -1,11 +1,19 @@
 #ifndef DUZ_APP_UTILS_C
 #define DUZ_APP_UTILS_C
 
+#include "duz_app_config.h"
 #include "driver_app_config.h"
 #include <deca_device_api.h>
 #include <deca_types.h>
+#include "deca_dbg.h"
 #include <stdlib.h>
 #include <math.h>
+
+#if DEBUG_PRINT
+#define debug_print diag_printf
+#else
+#define debug_print do_nothing
+#endif
 
 #define NODE_MALLOC qmalloc
 #define NODE_FREE   qfree
@@ -20,7 +28,6 @@
 uint32_t get_dwt_time_ms();
 float pdoa2degree(uint32_t);
 void rssi_cal(int *, int *);
-
-
+void do_nothing(char *s, ...);
 
 #endif // DUZ_APP_UTILS_C

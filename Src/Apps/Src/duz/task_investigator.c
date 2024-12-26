@@ -70,7 +70,7 @@ static void InvestigatorTask(void *arg)
     if (investigator_calib_mode)
     {
         // Calibration Mode
-        diag_printf("Investigator: Calibration (Only RX)\r\n"); 
+        debug_print("Investigator: Calibration (Only RX)\r\n"); 
     }
     else
     {
@@ -84,7 +84,7 @@ static void InvestigatorTask(void *arg)
          
         if (!investigator_calib_mode)
         {
-            diag_printf("Investigator: Waiting for trigger\r\n");
+            debug_print("Investigator: Waiting for trigger\r\n");
             /* Wait for trigger from push button*/
             uint32_t pushbutton = nrf_gpio_pin_read(INVESTIGATOR_PUSH_BUTTON_PIN_NUM);
             while(pushbutton) // 0 is pushed
@@ -94,11 +94,11 @@ static void InvestigatorTask(void *arg)
             }
 
             /* Start transmitting blinks for initiation and then go to reception for INVESTIGATOR_RECEIVER_TIME_MS [ms] */
-            diag_printf("Investigator: Start initiation for %dms\r\n", (INVESTIGATOR_BLINK_COUNT-1)*INVESTIGATOR_BLINK_INTERVAL_MS); 
+            debug_print("Investigator: Start initiation for %dms\r\n", (INVESTIGATOR_BLINK_COUNT-1)*INVESTIGATOR_BLINK_INTERVAL_MS); 
             start_investigator_tx();    
             
             /* Start reception on the Responder for RESPONDER_RECEIVER_ON_MS [ms]. */
-            diag_printf("Investigator: Start reception for %dms\r\n", INVESTIGATOR_RECEIVER_TIME_MS); 
+            debug_print("Investigator: Start reception for %dms\r\n", INVESTIGATOR_RECEIVER_TIME_MS); 
         }
 
         lock = qirq_lock();
@@ -201,7 +201,7 @@ static void investigator_setup_tasks(void)
 
 void investigator_terminate(void)
 {
-    diag_printf("investigator: Stopped\r\n"); 
+    debug_print("investigator: Stopped\r\n"); 
 
     /* Need to switch off UWB chip's RX and IRQ before killing tasks. */
     hal_uwb.stop_all_uwb();
@@ -216,7 +216,7 @@ void investigator_starter(void const *argument)
 {
     error_e tmp;
 
-    diag_printf("investigator: Started\r\n");
+    debug_print("investigator: Started\r\n");
 
     /* Not used. */
     (void)argument;
